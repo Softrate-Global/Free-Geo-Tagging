@@ -27,11 +27,21 @@ import { LocalMetadataService } from '../../../shared/services/localMetadataServ
 import { PermissionService } from '../../permissions/services/permissionService';
 
 import { generatePhotoFilename } from '../../../core/utils/filenameGenerator';
-import { PhotoMetadata } from '../../../shared/types/photoTypes';
+import { PhotoMetadata, GPSStatus, LocationData } from '../../../shared/types/photoTypes';
 import { WatermarkData } from '../../watermark/types/watermarkTypes';
 import { colors } from '../../../core/theme/colors';
 import { typography } from '../../../core/theme/typography';
 import { spacing } from '../../../core/theme/spacing';
+import { PhotoPreviewModal } from '../components/PhotoPreviewModal';
+
+interface PendingCapture {
+  watermarkedUri: string;
+  captureTimestamp: number;
+  width: number;
+  height: number;
+  location: LocationData | null;
+  gpsStatus: GPSStatus;
+}
 
 interface CameraScreenProps {
   navigation: any;
@@ -57,6 +67,10 @@ export const CameraScreen: React.FC<CameraScreenProps> = ({ navigation }) => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [processingStatus, setProcessingStatus] = useState<string>('');
   const [lastThumbnailUri, setLastThumbnailUri] = useState<string | null>(null);
+
+  // Pending Photo Preview State (Before saving to gallery)
+  const [pendingPhoto, setPendingPhoto] = useState<PendingCapture | null>(null);
+  const [isSavingPending, setIsSavingPending] = useState(false);
 
   // Off-screen compositing state
   const [compositeImage, setCompositeImage] = useState<{
@@ -200,31 +214,15 @@ export const CameraScreen: React.FC<CameraScreenProps> = ({ navigation }) => {
       setProcessingStatus('Embedding watermark pixels...');
       const watermarkedUri = await WatermarkService.compositeWatermark(viewShotRef);
 
-      // Step 5: Save processed image to permanent storage and public Free Geo Tagging album
-      setProcessingStatus('Saving to Free Geo Tagging album...');
-      const filename = generatePhotoFilename(captureTimestamp);
-      const { assetId, publicUri } = await GalleryService.saveToPublicGallery(
+      // Open Photo Preview Modal for user to choose Delete or Save to Gallery
+      setPendingPhoto({
         watermarkedUri,
-        filename
-      );
-
-      // Step 6: Persist photo metadata offline with resolved place and address
-      const photoMetadata: PhotoMetadata = {
-        id: `photo_${captureTimestamp}`,
-        filename,
-        mediaAssetId: assetId,
-        processedUri: publicUri,
+        captureTimestamp,
         width: rawPhoto.width,
         height: rawPhoto.height,
         location: finalLocation,
-        locationStatus: gpsStatus,
-        capturedAt: captureTimestamp,
-        processedAt: Date.now(),
-        watermarkApplied: true,
-      };
-
-      await LocalMetadataService.savePhoto(photoMetadata);
-      setLastThumbnailUri(publicUri);
+        gpsStatus,
+      });
 
       // Reset offscreen composite
       setCompositeImage(null);
@@ -232,12 +230,55 @@ export const CameraScreen: React.FC<CameraScreenProps> = ({ navigation }) => {
       console.error('Capture pipeline error:', err);
       Alert.alert(
         'Capture Failed',
-        err.message || 'An error occurred while saving the watermarked photograph.'
+        err.message || 'An error occurred while creating the watermarked photograph.'
       );
       setCompositeImage(null);
     } finally {
       setIsProcessing(false);
       setProcessingStatus('');
+    }
+  };
+
+  const handleDiscardPendingPhoto = () => {
+    setPendingPhoto(null);
+  };
+
+  const handleSavePendingPhoto = async () => {
+    if (!pendingPhoto || isSavingPending) return;
+
+    try {
+      setIsSavingPending(true);
+      const filename = generatePhotoFilename(pendingPhoto.captureTimestamp);
+      const { assetId, publicUri } = await GalleryService.saveToPublicGallery(
+        pendingPhoto.watermarkedUri,
+        filename
+      );
+
+      const photoMetadata: PhotoMetadata = {
+        id: `photo_${pendingPhoto.captureTimestamp}`,
+        filename,
+        mediaAssetId: assetId,
+        processedUri: publicUri,
+        width: pendingPhoto.width,
+        height: pendingPhoto.height,
+        location: pendingPhoto.location,
+        locationStatus: pendingPhoto.gpsStatus,
+        capturedAt: pendingPhoto.captureTimestamp,
+        processedAt: Date.now(),
+        watermarkApplied: true,
+      };
+
+      await LocalMetadataService.savePhoto(photoMetadata);
+      setLastThumbnailUri(publicUri);
+      setPendingPhoto(null);
+    } catch (err: any) {
+      console.error('Save to gallery error:', err);
+      Alert.alert(
+        'Save Failed',
+        err.message || 'An error occurred while saving the photograph to your gallery.'
+      );
+    } finally {
+      setIsSavingPending(false);
     }
   };
 
@@ -331,6 +372,15 @@ export const CameraScreen: React.FC<CameraScreenProps> = ({ navigation }) => {
           </ViewShot>
         </View>
       )}
+
+      {/* Full Screen Photo Capture Preview with Top Left Delete and Top Right Save to Gallery */}
+      <PhotoPreviewModal
+        visible={!!pendingPhoto}
+        imageUri={pendingPhoto?.watermarkedUri || null}
+        onDelete={handleDiscardPendingPhoto}
+        onSave={handleSavePendingPhoto}
+        isSaving={isSavingPending}
+      />
     </View>
   );
 };
