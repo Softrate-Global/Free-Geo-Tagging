@@ -8,9 +8,9 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
-import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { PermissionService } from '../../permissions/services/permissionService';
+import { APP_CONSTANTS } from '../../../core/constants/appConstants';
 
 const STORAGE_KEY_ONBOARDING = '@has_seen_onboarding_v1';
 
@@ -29,11 +29,15 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ navigation }) => {
       await PermissionService.requestLocation();
       await PermissionService.requestMediaLibrary();
 
-      // Persist onboarding state
+      // Persist onboarding state to local storage
+      await AsyncStorage.setItem(APP_CONSTANTS.ONBOARDING_COMPLETED_KEY, 'true');
       await AsyncStorage.setItem(STORAGE_KEY_ONBOARDING, 'true');
 
-      // Navigate to camera viewfinder
-      navigation.replace('Camera');
+      // Navigate to camera viewfinder and reset stack history
+      navigation.reset({
+        index: 0,
+        routes: [{ name: 'Camera' }],
+      });
     } catch (err) {
       console.warn('Onboarding navigation notice:', err);
       navigation.replace('Camera');
@@ -49,87 +53,129 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ navigation }) => {
 
       {/* ──────── UNIFIED CENTER GROUP (ILLUSTRATION + TEXT) ──────── */}
       <View style={styles.centerGroup}>
-        {/* Compact, tightly-framed illustration box */}
+        {/* Memphis Confetti Framed Illustration Box */}
         <View style={styles.illustrationBox}>
-          {/* ──────── LOCATION, GPS, MAP, ROAD & LANDMARK ICONS FLOATING NEAR CAMERA ──────── */}
-          {/* 1. Top Left - Location Marker */}
-          <View style={[styles.floatingItem, styles.posTopLeftLocation]}>
-            <Ionicons name="location" size={22} color="#000000" />
+          {/* ──────── MEMPHIS STYLE PARTY PAPERS (MATCHING REFERENCE DESIGN) ──────── */}
+          {/* 1. Upper-Left Big Coral Hook Noodle */}
+          <View style={[styles.floatingItem, styles.posNoodleCoralUpperLeft]}>
+            <View style={styles.noodleCoralHook} />
           </View>
 
-          {/* 2. Top Inner-Left - Satellite GPS */}
-          <View style={[styles.floatingItem, styles.posTopInnerLeftSatellite]}>
-            <MaterialCommunityIcons name="satellite-variant" size={20} color="#000000" />
+          {/* 2. Solid Orange Square (above coral noodle) */}
+          <View style={[styles.floatingItem, styles.posSquareOrangeUpperLeft]}>
+            <View style={styles.squareOrange} />
           </View>
 
-          {/* 3. Top Center - Compass */}
-          <View style={[styles.floatingItem, styles.posTopCenterCompass]}>
-            <Ionicons name="compass-outline" size={23} color="#000000" />
+          {/* 3. Solid Yellow Dot (Top-Left) */}
+          <View style={[styles.floatingItem, styles.posDotYellowTopLeft]}>
+            <View style={styles.dotYellow} />
           </View>
 
-          {/* 4. Top Inner-Right - Route / Road Path */}
-          <View style={[styles.floatingItem, styles.posTopInnerRightRoute]}>
-            <MaterialCommunityIcons name="routes" size={21} color="#000000" />
+          {/* 4. Solid Red Square (Far Top-Left) */}
+          <View style={[styles.floatingItem, styles.posSquareRedTopFarLeft]}>
+            <View style={styles.squareRedSmall} />
           </View>
 
-          {/* 5. Top Right - Folded Map */}
-          <View style={[styles.floatingItem, styles.posTopRightMap]}>
-            <Ionicons name="map-outline" size={22} color="#000000" />
+          {/* 5. Top Green Curved Noodle */}
+          <View style={[styles.floatingItem, styles.posNoodleGreenTop]}>
+            <View style={styles.noodleGreen} />
           </View>
 
-          {/* 6. Upper-Left - Globe / Earth */}
-          <View style={[styles.floatingItem, styles.posUpperLeftGlobe]}>
-            <Ionicons name="globe-outline" size={21} color="#000000" />
+          {/* 6. Solid Sky Blue Diamond (near green noodle) */}
+          <View style={[styles.floatingItem, styles.posDiamondBlueTop]}>
+            <View style={styles.diamondBlue} />
           </View>
 
-          {/* 7. Mid-Left - GPS Crosshair / Target */}
-          <View style={[styles.floatingItem, styles.posMidLeftCrosshair]}>
-            <MaterialCommunityIcons name="crosshairs-gps" size={21} color="#000000" />
+          {/* 7. Small Solid Yellow Triangle (Top) */}
+          <View style={[styles.floatingItem, styles.posTriangleYellowTop]}>
+            <View style={styles.triangleYellowMini} />
           </View>
 
-          {/* 8. Lower-Left - Highway / Road */}
-          <View style={[styles.floatingItem, styles.posLowerLeftRoad]}>
-            <MaterialCommunityIcons name="road-variant" size={22} color="#000000" />
+          {/* 8. Solid Coral Triangle Pointing Down (Top-Mid) */}
+          <View style={[styles.floatingItem, styles.posTriangleCoralTop]}>
+            <View style={styles.triangleCoralMini} />
           </View>
 
-          {/* 9. Upper-Right - Road Signpost */}
-          <View style={[styles.floatingItem, styles.posUpperRightSignpost]}>
-            <Ionicons name="trail-sign-outline" size={21} color="#000000" />
+          {/* 9. Solid Red Dot (Top-Right) */}
+          <View style={[styles.floatingItem, styles.posDotRedTopRight]}>
+            <View style={styles.dotRed} />
           </View>
 
-          {/* 10. Mid-Right - GPS Navigation Arrow */}
-          <View style={[styles.floatingItem, styles.posMidRightNavigate]}>
-            <Ionicons name="navigate" size={20} color="#000000" />
+          {/* 10. Solid Blue Triangle (Top-Right) */}
+          <View style={[styles.floatingItem, styles.posTriangleBlueTopRight]}>
+            <View style={styles.triangleBlueMini} />
           </View>
 
-          {/* 11. Lower-Right - Landmark / Building */}
-          <View style={[styles.floatingItem, styles.posLowerRightLandmark]}>
-            <Ionicons name="business-outline" size={22} color="#000000" />
+          {/* 11. Mid-Right Big Yellow/Orange Arc */}
+          <View style={[styles.floatingItem, styles.posArcYellowRight]}>
+            <View style={styles.arcYellow} />
           </View>
 
-          {/* 12. Bottom Left - Map Pin */}
-          <View style={[styles.floatingItem, styles.posBottomLeftPin]}>
-            <Ionicons name="pin" size={21} color="#000000" />
+          {/* 12. Solid Red Square (beside yellow arc) */}
+          <View style={[styles.floatingItem, styles.posSquareRedRight]}>
+            <View style={styles.squareRed} />
           </View>
 
-          {/* 13. Bottom Inner-Left - Destination Flag */}
-          <View style={[styles.floatingItem, styles.posBottomInnerLeftFlag]}>
-            <Ionicons name="flag" size={20} color="#000000" />
+          {/* 13. Solid Green Dot (Mid-Right) */}
+          <View style={[styles.floatingItem, styles.posDotGreenRight]}>
+            <View style={styles.dotGreen} />
           </View>
 
-          {/* 14. Bottom Center - Direction Navigate Circle */}
-          <View style={[styles.floatingItem, styles.posBottomCenterNavigate]}>
-            <Ionicons name="navigate-circle-outline" size={23} color="#000000" />
+          {/* 14. Solid Green Triangle (Mid-Right) */}
+          <View style={[styles.floatingItem, styles.posTriangleGreenRight]}>
+            <View style={styles.triangleGreenMini} />
           </View>
 
-          {/* 15. Bottom Inner-Right - City Skyline Landmark */}
-          <View style={[styles.floatingItem, styles.posBottomInnerRightCity]}>
-            <MaterialCommunityIcons name="city-variant-outline" size={21} color="#000000" />
+          {/* 15. Solid Coral Triangle (Far-Right) */}
+          <View style={[styles.floatingItem, styles.posTriangleCoralFarRight]}>
+            <View style={styles.triangleCoralSide} />
           </View>
 
-          {/* 16. Bottom Right - GPS Radar Marker */}
-          <View style={[styles.floatingItem, styles.posBottomRightRadar]}>
-            <MaterialCommunityIcons name="map-marker-radius-outline" size={23} color="#000000" />
+          {/* 16. Solid Blue Oval / Dot (Mid-Left) */}
+          <View style={[styles.floatingItem, styles.posDotBlueMidLeft]}>
+            <View style={styles.dotBlue} />
+          </View>
+
+          {/* 17. Solid Blue Triangle Pointing Down (Mid-Left) */}
+          <View style={[styles.floatingItem, styles.posTriangleBlueMidLeft]}>
+            <View style={styles.triangleBlueDown} />
+          </View>
+
+          {/* 18. Solid Red Pill / Oval (Lower-Mid Left) */}
+          <View style={[styles.floatingItem, styles.posDotRedLowerMid]}>
+            <View style={styles.pillRed} />
+          </View>
+
+          {/* 19. Green Curved Noodle (Bottom-Left) */}
+          <View style={[styles.floatingItem, styles.posNoodleGreenBottom]}>
+            <View style={styles.noodleGreenTail} />
+          </View>
+
+          {/* 20. Solid Blue Dot (Bottom Center) */}
+          <View style={[styles.floatingItem, styles.posDotBlueBottomCenter]}>
+            <View style={styles.dotBlueSmall} />
+          </View>
+
+          {/* 21. Solid Teal Square + Slash (Bottom Center) */}
+          <View style={[styles.floatingItem, styles.posGroupTealSquareBottom]}>
+            <View style={styles.squareTeal} />
+            <View style={styles.slashBlueDiagonal} />
+          </View>
+
+          {/* 22. Coral 'J' Hook Noodle (Bottom-Right) */}
+          <View style={[styles.floatingItem, styles.posNoodleCoralHookBottom]}>
+            <View style={styles.noodleCoralJ} />
+          </View>
+
+          {/* 23. Solid Yellow Triangle (Bottom-Right) */}
+          <View style={[styles.floatingItem, styles.posTriangleYellowBottom]}>
+            <View style={styles.triangleYellowMini} />
+          </View>
+
+          {/* 24. Solid Green Bar + Blue Dot (Far Bottom-Right) */}
+          <View style={[styles.floatingItem, styles.posGroupGreenBarBottomRight]}>
+            <View style={styles.barGreen} />
+            <View style={styles.dotBlueSmall} />
           </View>
 
           {/* ──────── BLACK SKELETON CAMERA ICON ──────── */}
@@ -210,10 +256,10 @@ const styles = StyleSheet.create({
     marginTop: -15,
   },
 
-  /* ──────── Compact Hero Illustration Box Eliminates Giant White Canyon ──────── */
+  /* ──────── Memphis Confetti Illustration Box ──────── */
   illustrationBox: {
-    width: 310,
-    height: 230,
+    width: 320,
+    height: 240,
     alignItems: 'center',
     justifyContent: 'center',
     position: 'relative',
@@ -291,92 +337,309 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
   },
 
-  /* ──────── Geo, Map, GPS, Road & Landmark Floating Icons ──────── */
+  /* ──────── Memphis Style Party Papers (Reduced Soft Palette) ──────── */
   floatingItem: {
     position: 'absolute',
     zIndex: 2,
     alignItems: 'center',
     justifyContent: 'center',
+    opacity: 0.72,
   },
-  posTopLeftLocation: {
-    top: 8,
-    left: 22,
-    transform: [{ rotate: '12deg' }],
-  },
-  posTopInnerLeftSatellite: {
-    top: 26,
-    left: 70,
-    transform: [{ rotate: '-18deg' }],
-  },
-  posTopCenterCompass: {
-    top: 4,
-    left: '47%',
-    transform: [{ rotate: '10deg' }],
-  },
-  posTopInnerRightRoute: {
-    top: 24,
-    right: 68,
-    transform: [{ rotate: '-15deg' }],
-  },
-  posTopRightMap: {
-    top: 8,
-    right: 20,
-    transform: [{ rotate: '-10deg' }],
-  },
-  posUpperLeftGlobe: {
-    top: 52,
-    left: 16,
-    transform: [{ rotate: '-8deg' }],
-  },
-  posMidLeftCrosshair: {
-    top: 96,
-    left: 8,
-    transform: [{ rotate: '15deg' }],
-  },
-  posLowerLeftRoad: {
-    top: 140,
-    left: 18,
+
+  /* Memphis Shapes - Harmonious 3-Color Palette (Soft Coral, Soft Amber, Soft Sky Blue) */
+  noodleCoralHook: {
+    width: 28,
+    height: 42,
+    borderTopWidth: 4.5,
+    borderLeftWidth: 4.5,
+    borderTopLeftRadius: 20,
+    borderBottomLeftRadius: 20,
+    borderColor: '#F87171',
     transform: [{ rotate: '20deg' }],
   },
-  posUpperRightSignpost: {
-    top: 50,
-    right: 18,
+  squareOrange: {
+    width: 14,
+    height: 14,
+    backgroundColor: '#FBBF24',
+    borderRadius: 2.5,
     transform: [{ rotate: '12deg' }],
   },
-  posMidRightNavigate: {
-    top: 94,
-    right: 10,
+  dotYellow: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: '#FBBF24',
+  },
+  squareRedSmall: {
+    width: 11,
+    height: 11,
+    backgroundColor: '#F87171',
+    borderRadius: 2,
+  },
+  noodleGreen: {
+    width: 44,
+    height: 24,
+    borderTopWidth: 4,
+    borderLeftWidth: 4,
+    borderTopLeftRadius: 20,
+    borderColor: '#60A5FA',
+    transform: [{ rotate: '-18deg' }],
+  },
+  diamondBlue: {
+    width: 10,
+    height: 10,
+    backgroundColor: '#60A5FA',
+    transform: [{ rotate: '45deg' }],
+  },
+  triangleYellowMini: {
+    width: 0,
+    height: 0,
+    borderLeftWidth: 5,
+    borderRightWidth: 5,
+    borderBottomWidth: 8,
+    borderLeftColor: 'transparent',
+    borderRightColor: 'transparent',
+    borderBottomColor: '#FBBF24',
+  },
+  triangleCoralMini: {
+    width: 0,
+    height: 0,
+    borderLeftWidth: 6,
+    borderRightWidth: 6,
+    borderTopWidth: 10,
+    borderLeftColor: 'transparent',
+    borderRightColor: 'transparent',
+    borderTopColor: '#F87171',
+  },
+  dotRed: {
+    width: 9,
+    height: 9,
+    borderRadius: 4.5,
+    backgroundColor: '#F87171',
+  },
+  triangleBlueMini: {
+    width: 0,
+    height: 0,
+    borderLeftWidth: 5,
+    borderRightWidth: 5,
+    borderBottomWidth: 9,
+    borderLeftColor: 'transparent',
+    borderRightColor: 'transparent',
+    borderBottomColor: '#60A5FA',
     transform: [{ rotate: '25deg' }],
   },
-  posLowerRightLandmark: {
-    top: 138,
-    right: 18,
-    transform: [{ rotate: '-12deg' }],
-  },
-  posBottomLeftPin: {
-    bottom: 14,
-    left: 24,
+  arcYellow: {
+    width: 36,
+    height: 46,
+    borderTopWidth: 4.5,
+    borderRightWidth: 4.5,
+    borderTopRightRadius: 26,
+    borderBottomRightRadius: 26,
+    borderColor: '#FBBF24',
     transform: [{ rotate: '18deg' }],
   },
-  posBottomInnerLeftFlag: {
-    bottom: 8,
-    left: 74,
+  squareRed: {
+    width: 13,
+    height: 13,
+    backgroundColor: '#F87171',
+    borderRadius: 2.5,
+    transform: [{ rotate: '15deg' }],
+  },
+  dotGreen: {
+    width: 11,
+    height: 11,
+    borderRadius: 5.5,
+    backgroundColor: '#60A5FA',
+  },
+  triangleGreenMini: {
+    width: 0,
+    height: 0,
+    borderLeftWidth: 5,
+    borderRightWidth: 5,
+    borderBottomWidth: 8,
+    borderLeftColor: 'transparent',
+    borderRightColor: 'transparent',
+    borderBottomColor: '#60A5FA',
+    transform: [{ rotate: '45deg' }],
+  },
+  triangleCoralSide: {
+    width: 0,
+    height: 0,
+    borderLeftWidth: 6,
+    borderRightWidth: 6,
+    borderBottomWidth: 10,
+    borderLeftColor: 'transparent',
+    borderRightColor: 'transparent',
+    borderBottomColor: '#F87171',
+    transform: [{ rotate: '45deg' }],
+  },
+  dotBlue: {
+    width: 12,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: '#60A5FA',
+  },
+  triangleBlueDown: {
+    width: 0,
+    height: 0,
+    borderLeftWidth: 5,
+    borderRightWidth: 5,
+    borderTopWidth: 9,
+    borderLeftColor: 'transparent',
+    borderRightColor: 'transparent',
+    borderTopColor: '#60A5FA',
+    transform: [{ rotate: '20deg' }],
+  },
+  pillRed: {
+    width: 14,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#F87171',
     transform: [{ rotate: '-12deg' }],
   },
-  posBottomCenterNavigate: {
-    bottom: 4,
-    left: '47%',
-    transform: [{ rotate: '8deg' }],
+  noodleGreenTail: {
+    width: 32,
+    height: 48,
+    borderLeftWidth: 4,
+    borderTopLeftRadius: 24,
+    borderBottomLeftRadius: 24,
+    borderColor: '#60A5FA',
+    transform: [{ rotate: '24deg' }],
   },
-  posBottomInnerRightCity: {
-    bottom: 10,
-    right: 70,
-    transform: [{ rotate: '10deg' }],
+  dotBlueSmall: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#60A5FA',
   },
-  posBottomRightRadar: {
+  squareTeal: {
+    width: 13,
+    height: 13,
+    backgroundColor: '#60A5FA',
+    borderRadius: 2.5,
+  },
+  slashBlueDiagonal: {
+    width: 15,
+    height: 3,
+    backgroundColor: '#F87171',
+    borderRadius: 1.5,
+    transform: [{ rotate: '55deg' }],
+    marginTop: -2,
+    marginLeft: 8,
+  },
+  noodleCoralJ: {
+    width: 26,
+    height: 38,
+    borderBottomWidth: 4,
+    borderRightWidth: 4,
+    borderBottomRightRadius: 18,
+    borderColor: '#F87171',
+    transform: [{ rotate: '14deg' }],
+  },
+  barGreen: {
+    width: 15,
+    height: 7,
+    backgroundColor: '#FBBF24',
+    borderRadius: 2,
+    transform: [{ rotate: '-30deg' }],
+  },
+
+  /* Positions */
+  posNoodleCoralUpperLeft: {
+    top: 40,
+    left: 24,
+  },
+  posSquareOrangeUpperLeft: {
+    top: 22,
+    left: 26,
+  },
+  posDotYellowTopLeft: {
+    top: 6,
+    left: 68,
+  },
+  posSquareRedTopFarLeft: {
+    top: 4,
+    left: 14,
+  },
+  posNoodleGreenTop: {
+    top: 12,
+    left: 104,
+  },
+  posDiamondBlueTop: {
+    top: 26,
+    left: 146,
+  },
+  posTriangleYellowTop: {
+    top: 28,
+    left: 100,
+  },
+  posTriangleCoralTop: {
+    top: 14,
+    right: 110,
+  },
+  posDotRedTopRight: {
+    top: 4,
+    right: 86,
+  },
+  posTriangleBlueTopRight: {
+    top: 10,
+    right: 44,
+  },
+  posArcYellowRight: {
+    top: 32,
+    right: 28,
+  },
+  posSquareRedRight: {
+    top: 58,
+    right: 14,
+  },
+  posDotGreenRight: {
+    top: 60,
+    right: 78,
+  },
+  posTriangleGreenRight: {
+    top: 72,
+    right: 62,
+  },
+  posTriangleCoralFarRight: {
+    top: 116,
+    right: 10,
+  },
+  posDotBlueMidLeft: {
+    top: 88,
+    left: 18,
+  },
+  posTriangleBlueMidLeft: {
+    top: 126,
+    left: 20,
+  },
+  posDotRedLowerMid: {
+    top: 130,
+    left: 44,
+  },
+  posNoodleGreenBottom: {
+    bottom: 8,
+    left: 52,
+  },
+  posDotBlueBottomCenter: {
+    bottom: 32,
+    left: 112,
+  },
+  posGroupTealSquareBottom: {
+    bottom: 12,
+    left: 128,
+  },
+  posNoodleCoralHookBottom: {
+    bottom: 8,
+    right: 68,
+  },
+  posTriangleYellowBottom: {
+    bottom: 26,
+    right: 90,
+  },
+  posGroupGreenBarBottomRight: {
     bottom: 14,
-    right: 22,
-    transform: [{ rotate: '-16deg' }],
+    right: 26,
   },
 
   /* ──────── Middle Content Section ──────── */

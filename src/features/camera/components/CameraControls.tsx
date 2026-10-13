@@ -1,5 +1,7 @@
 import React from 'react';
 import { View, StyleSheet, TouchableOpacity, Text, Image } from 'react-native';
+import { FlashMode } from 'expo-camera';
+import { Ionicons } from '@expo/vector-icons';
 import { CaptureButton } from './CaptureButton';
 import { typography } from '../../../core/theme/typography';
 import { spacing } from '../../../core/theme/spacing';
@@ -11,6 +13,8 @@ interface CameraControlsProps {
   isProcessing: boolean;
   canCapture: boolean;
   thumbnailUri?: string | null;
+  flashMode?: FlashMode;
+  onToggleFlash?: () => void;
 }
 
 export const CameraControls: React.FC<CameraControlsProps> = ({
@@ -20,13 +24,15 @@ export const CameraControls: React.FC<CameraControlsProps> = ({
   isProcessing,
   canCapture,
   thumbnailUri,
+  flashMode = 'off',
+  onToggleFlash,
 }) => {
   return (
     <View style={styles.container}>
-      {/* Gallery Button with last captured thumbnail preview */}
+      {/* 1. Gallery Button with last captured thumbnail preview */}
       <TouchableOpacity
         activeOpacity={0.7}
-        style={styles.sideBtn}
+        style={styles.iconBtn}
         onPress={onOpenGallery}
         disabled={isProcessing}
       >
@@ -34,28 +40,53 @@ export const CameraControls: React.FC<CameraControlsProps> = ({
           <Image source={{ uri: thumbnailUri }} style={styles.thumbnail} />
         ) : (
           <View style={styles.galleryPlaceholder}>
-            <Text style={styles.sideBtnText}>GALLERY</Text>
+            <Ionicons name="images-outline" size={22} color="#FFFFFF" />
           </View>
         )}
       </TouchableOpacity>
 
-      {/* Main Shutter Button */}
+      {/* 2. Flashlight Toggle Icon Button */}
+      {onToggleFlash && (
+        <TouchableOpacity
+          activeOpacity={0.7}
+          style={[styles.iconBtn, styles.circleBtn, flashMode === 'on' && styles.circleBtnActive]}
+          onPress={onToggleFlash}
+          disabled={isProcessing}
+        >
+          <Ionicons
+            name={
+              flashMode === 'on'
+                ? 'flash'
+                : flashMode === 'auto'
+                ? 'flash'
+                : 'flash-off'
+            }
+            size={22}
+            color={flashMode === 'on' ? '#FBBF24' : '#FFFFFF'}
+          />
+          {flashMode === 'auto' && (
+            <View style={styles.autoBadge}>
+              <Text style={styles.autoBadgeText}>A</Text>
+            </View>
+          )}
+        </TouchableOpacity>
+      )}
+
+      {/* 3. Main Shutter Button */}
       <CaptureButton
         onPress={onCapture}
         disabled={!canCapture}
         isProcessing={isProcessing}
       />
 
-      {/* Switch Camera Facing Button */}
+      {/* 4. Switch Camera Facing Flip Icon Button */}
       <TouchableOpacity
         activeOpacity={0.7}
-        style={styles.sideBtn}
+        style={[styles.iconBtn, styles.circleBtn]}
         onPress={onSwitchCamera}
         disabled={isProcessing}
       >
-        <View style={styles.flipPlaceholder}>
-          <Text style={styles.sideBtnText}>FLIP</Text>
-        </View>
+        <Ionicons name="camera-reverse-outline" size={24} color="#FFFFFF" />
       </TouchableOpacity>
     </View>
   );
@@ -66,49 +97,57 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-around',
-    paddingVertical: spacing.lg,
-    paddingHorizontal: spacing.xl,
-    backgroundColor: 'rgba(0, 0, 0, 0.85)',
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.lg,
+    backgroundColor: '#000000',
   },
-  sideBtn: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
+  iconBtn: {
     alignItems: 'center',
     justifyContent: 'center',
   },
+  circleBtn: {
+    width: 46,
+    height: 46,
+    borderRadius: 23,
+    borderWidth: 1.5,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
+    backgroundColor: '#1C1C1E',
+    position: 'relative',
+  },
+  circleBtnActive: {
+    borderColor: '#FBBF24',
+    backgroundColor: 'rgba(251, 191, 36, 0.15)',
+  },
+  autoBadge: {
+    position: 'absolute',
+    top: 2,
+    right: 4,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 4,
+    paddingHorizontal: 2,
+  },
+  autoBadgeText: {
+    ...typography.micro,
+    color: '#000000',
+    fontSize: 8,
+    fontWeight: '800',
+    lineHeight: 10,
+  },
   thumbnail: {
-    width: 48,
-    height: 48,
-    borderRadius: 8,
+    width: 46,
+    height: 46,
+    borderRadius: 10,
     borderWidth: 1.5,
     borderColor: '#FFFFFF',
   },
   galleryPlaceholder: {
-    width: 48,
-    height: 48,
-    borderRadius: 8,
+    width: 46,
+    height: 46,
+    borderRadius: 10,
     borderWidth: 1.5,
-    borderColor: 'rgba(255, 255, 255, 0.4)',
+    borderColor: 'rgba(255, 255, 255, 0.35)',
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: '#1C1C1E',
-  },
-  flipPlaceholder: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    borderWidth: 1.5,
-    borderColor: 'rgba(255, 255, 255, 0.4)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#1C1C1E',
-  },
-  sideBtnText: {
-    ...typography.micro,
-    color: '#FFFFFF',
-    fontSize: 9,
-    fontWeight: '700',
-    letterSpacing: 0.5,
   },
 });

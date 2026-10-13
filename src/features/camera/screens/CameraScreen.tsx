@@ -37,12 +37,13 @@ import { EditLocationModal } from '../components/EditLocationModal';
 import { CustomLocationService } from '../../location/services/customLocationService';
 
 interface PendingCapture {
-  watermarkedUri: string;
+  photoUri: string;
   captureTimestamp: number;
   width: number;
   height: number;
   location: LocationData | null;
   gpsStatus: GPSStatus;
+  watermarkData: WatermarkData;
 }
 
 interface CameraScreenProps {
@@ -234,50 +235,28 @@ export const CameraScreen: React.FC<CameraScreenProps> = ({ navigation }) => {
         } catch {}
       }
 
-      setProcessingStatus('Compositing GPS watermark...');
+      setProcessingStatus('Preparing preview...');
       const watermarkData = WatermarkService.prepareWatermarkData(
         finalLocation,
         captureTimestamp
       );
 
-      // Set state to render offscreen compositing canvas
-      setCompositeImage({
-        uri: normalized.uri,
-        width: rawPhoto.width,
-        height: rawPhoto.height,
-        watermarkData,
-      });
-
-      // Allow one render tick for ViewShot to paint
-      await new Promise((resolve) => setTimeout(resolve, 350));
-
-      // Step 4: Rasterize the permanent image with embedded watermark
-      if (!viewShotRef.current) {
-        throw new Error('WATERMARK_RENDERER_ERROR');
-      }
-
-      setProcessingStatus('Embedding watermark pixels...');
-      const watermarkedUri = await WatermarkService.compositeWatermark(viewShotRef);
-
-      // Open Photo Preview Modal for user to choose Delete or Save to Gallery
+      // Open Photo Preview Modal for user to swipe/position watermark and save
       setPendingPhoto({
-        watermarkedUri,
+        photoUri: normalized.uri,
         captureTimestamp,
         width: rawPhoto.width,
         height: rawPhoto.height,
         location: finalLocation,
         gpsStatus,
+        watermarkData,
       });
-
-      // Reset offscreen composite
-      setCompositeImage(null);
     } catch (err: any) {
       console.error('Capture pipeline error:', err);
       Alert.alert(
         'Capture Failed',
-        err.message || 'An error occurred while creating the watermarked photograph.'
+        err.message || 'An error occurred while capturing the photograph.'
       );
-      setCompositeImage(null);
     } finally {
       setIsProcessing(false);
       setProcessingStatus('');
@@ -288,14 +267,14 @@ export const CameraScreen: React.FC<CameraScreenProps> = ({ navigation }) => {
     setPendingPhoto(null);
   };
 
-  const handleSavePendingPhoto = async () => {
+  const handleSavePendingPhoto = async (finalWatermarkedUri: string) => {
     if (!pendingPhoto || isSavingPending) return;
 
     try {
       setIsSavingPending(true);
       const filename = generatePhotoFilename(pendingPhoto.captureTimestamp);
       const { assetId, publicUri } = await GalleryService.saveToPublicGallery(
-        pendingPhoto.watermarkedUri,
+        finalWatermarkedUri,
         filename
       );
 
@@ -356,19 +335,10 @@ export const CameraScreen: React.FC<CameraScreenProps> = ({ navigation }) => {
       />
 
       <SafeAreaView style={styles.overlayContainer} edges={['top', 'bottom']}>
-        {/* Top Header Bar */}
+        {/* Top Header Bar (Clean, Minimal Branding) */}
         <View style={styles.topBar}>
           <Text style={styles.appBranding}>FREE GEO TAGGING</Text>
-          <FlashButton mode={flash} onToggle={handleToggleFlash} disabled={isProcessing} />
         </View>
-
-        {/* GPS Live Status & Coordinates HUD */}
-        <LocationStatus
-          status={gpsStatus}
-          location={effectiveLocation}
-          onRefresh={refreshLocation}
-          onEditLocation={() => setIsEditLocationModalVisible(true)}
-        />
 
         {/* Center Loading Indicator during capture processing */}
         {isProcessing && (
@@ -382,47 +352,37 @@ export const CameraScreen: React.FC<CameraScreenProps> = ({ navigation }) => {
 
         <View style={styles.spacer} />
 
-        {/* Bottom Controls Bar */}
-        <CameraControls
-          onCapture={handleCapture}
-          onSwitchCamera={handleToggleFacing}
-          onOpenGallery={() => navigation.navigate('Gallery')}
-          isProcessing={isProcessing}
-          canCapture={isCameraReady && !isProcessing}
-          thumbnailUri={lastThumbnailUri}
-        />
+        {/* Solid Black Unified Bottom Console (GPS HUD + Controls with Flash & Flip) */}
+        <View style={styles.bottomConsole}>
+          {/* GPS Live Status & Coordinates HUD */}
+          <LocationStatus
+            status={gpsStatus}
+            location={effectiveLocation}
+            onRefresh={refreshLocation}
+            onEditLocation={() => setIsEditLocationModalVisible(true)}
+          />
+
+          {/* Bottom Controls Bar (Gallery, Flashlight Icon, Shutter, Flip Icon) */}
+          <CameraControls
+            onCapture={handleCapture}
+            onSwitchCamera={handleToggleFacing}
+            onOpenGallery={() => navigation.navigate('Gallery')}
+            isProcessing={isProcessing}
+            canCapture={isCameraReady && !isProcessing}
+            thumbnailUri={lastThumbnailUri}
+            flashMode={flash}
+            onToggleFlash={handleToggleFlash}
+          />
+        </View>
       </SafeAreaView>
 
-      {/* Off-screen ViewShot Container for Permanent Watermark Baking */}
-      {compositeImage && (
-        <View style={styles.offscreenComposite} pointerEvents="none">
-          <ViewShot
-            ref={viewShotRef}
-            options={{ format: 'jpg', quality: 0.92, result: 'tmpfile' }}
-            style={[
-              styles.viewShotCanvas,
-              {
-                width: width,
-                height: Math.round((width * compositeImage.height) / (compositeImage.width || 1)),
-              },
-            ]}
-          >
-            <Image
-              source={{ uri: compositeImage.uri }}
-              style={StyleSheet.absoluteFill}
-              resizeMode="cover"
-            />
-            <View style={styles.watermarkAnchor}>
-              <WatermarkTemplate data={compositeImage.watermarkData} scale={1} />
-            </View>
-          </ViewShot>
-        </View>
-      )}
-
-      {/* Full Screen Photo Capture Preview with Top Left Delete and Top Right Save to Gallery */}
+      {/* Full Screen Photo Capture Preview with Swipeable Watermark */}
       <PhotoPreviewModal
         visible={!!pendingPhoto}
-        imageUri={pendingPhoto?.watermarkedUri || null}
+        photoUri={pendingPhoto?.photoUri || null}
+        photoWidth={pendingPhoto?.width}
+        photoHeight={pendingPhoto?.height}
+        watermarkData={pendingPhoto?.watermarkData || null}
         onDelete={handleDiscardPendingPhoto}
         onSave={handleSavePendingPhoto}
         isSaving={isSavingPending}
@@ -457,7 +417,7 @@ const styles = StyleSheet.create({
   },
   topBar: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: spacing.lg,
     paddingTop: spacing.xs,
@@ -471,6 +431,10 @@ const styles = StyleSheet.create({
   },
   spacer: {
     flex: 1,
+  },
+  bottomConsole: {
+    backgroundColor: '#000000',
+    width: '100%',
   },
   processingModal: {
     ...StyleSheet.absoluteFill,

@@ -1,7 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { PhotoMetadata } from '../../../shared/types/photoTypes';
-import { formatLatitude, formatLongitude, formatAccuracy, formatAltitude } from '../../../core/utils/locationFormatter';
 import { formatFullDateTime } from '../../../core/utils/dateTimeFormatter';
 import { typography } from '../../../core/theme/typography';
 import { colors } from '../../../core/theme/colors';
@@ -57,39 +56,21 @@ export const PhotoMetadataPanel: React.FC<PhotoMetadataPanelProps> = ({
           <Text style={styles.sectionTitle}>GEOGRAPHICAL LOCATION</Text>
           {photo.location ? (
             <>
-              {photo.location.placeName ? (
-                <View style={styles.row}>
-                  <Text style={styles.label}>PLACE</Text>
-                  <Text style={styles.val}>{photo.location.placeName}</Text>
-                </View>
-              ) : null}
-              {photo.location.formattedAddress ? (
+              <View style={styles.row}>
+                <Text style={styles.label}>LOCATION NAME</Text>
+                <Text style={styles.val}>{photo.location.placeName || 'GPS Location'}</Text>
+              </View>
+              {photo.location.formattedAddress || photo.location.subAddress ? (
                 <View style={styles.row}>
                   <Text style={styles.label}>ADDRESS</Text>
-                  <Text style={styles.val}>{photo.location.formattedAddress}</Text>
+                  <Text style={styles.val}>
+                    {photo.location.formattedAddress || photo.location.subAddress}
+                  </Text>
                 </View>
               ) : null}
-              <View style={styles.row}>
-                <Text style={styles.label}>LATITUDE</Text>
-                <Text style={styles.valMono}>{formatLatitude(photo.location.latitude)}</Text>
-              </View>
-              <View style={styles.row}>
-                <Text style={styles.label}>LONGITUDE</Text>
-                <Text style={styles.valMono}>{formatLongitude(photo.location.longitude)}</Text>
-              </View>
-              <View style={styles.row}>
-                <Text style={styles.label}>ACCURACY</Text>
-                <Text style={styles.valMono}>{formatAccuracy(photo.location.accuracy)}</Text>
-              </View>
-              {photo.location.altitude != null && (
-                <View style={styles.row}>
-                  <Text style={styles.label}>ALTITUDE</Text>
-                  <Text style={styles.valMono}>{formatAltitude(photo.location.altitude)}</Text>
-                </View>
-              )}
             </>
           ) : (
-            <Text style={styles.noGpsText}>No GPS coordinates acquired at capture time.</Text>
+            <Text style={styles.noGpsText}>No GPS location acquired at capture time.</Text>
           )}
         </View>
       </ScrollView>

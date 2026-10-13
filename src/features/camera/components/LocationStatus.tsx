@@ -44,16 +44,6 @@ export const LocationStatus: React.FC<LocationStatusProps> = ({
         </View>
 
         <View style={styles.headerActions}>
-          {onEditLocation && (
-            <TouchableOpacity
-              activeOpacity={0.7}
-              style={styles.actionBtn}
-              onPress={onEditLocation}
-            >
-              <Text style={styles.actionBtnText}>EDIT PLACE</Text>
-            </TouchableOpacity>
-          )}
-
           {onRefresh && (
             <TouchableOpacity
               activeOpacity={0.7}
@@ -66,13 +56,9 @@ export const LocationStatus: React.FC<LocationStatusProps> = ({
         </View>
       </View>
 
-      {/* Place / Building Name & Full Address (LAT, LON, ACC removed) */}
+      {/* Place / Building Name & Full Address */}
       {location?.placeName ? (
-        <TouchableOpacity
-          activeOpacity={onEditLocation ? 0.75 : 1}
-          onPress={onEditLocation}
-          style={styles.placeRow}
-        >
+        <View style={styles.placeRow}>
           <View style={styles.placeTitleRow}>
             <Text style={styles.placeTitle} numberOfLines={1}>
               {location.placeName.toUpperCase()}
@@ -83,7 +69,7 @@ export const LocationStatus: React.FC<LocationStatusProps> = ({
               {addressText}
             </Text>
           ) : null}
-        </TouchableOpacity>
+        </View>
       ) : null}
     </View>
   );
@@ -91,14 +77,12 @@ export const LocationStatus: React.FC<LocationStatusProps> = ({
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: 'rgba(0, 0, 0, 0.75)',
-    borderColor: 'rgba(255, 255, 255, 0.2)',
-    borderWidth: 1,
-    borderRadius: borderRadius.sm,
+    backgroundColor: '#000000',
+    width: '100%',
     paddingVertical: spacing.sm,
-    paddingHorizontal: spacing.md,
-    marginHorizontal: spacing.md,
-    marginTop: spacing.xs,
+    paddingHorizontal: spacing.lg,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255, 255, 255, 0.1)',
   },
   headerRow: {
     flexDirection: 'row',
@@ -135,11 +119,12 @@ const styles = StyleSheet.create({
     gap: spacing.xs,
   },
   actionBtn: {
-    paddingVertical: 2,
-    paddingHorizontal: 6,
-    borderRadius: 2,
+    paddingVertical: 3,
+    paddingHorizontal: 8,
+    borderRadius: 12,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.4)',
+    borderColor: 'rgba(255, 255, 255, 0.3)',
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
   },
   actionBtnText: {
     ...typography.micro,
@@ -159,14 +144,14 @@ const styles = StyleSheet.create({
   placeTitle: {
     ...typography.captionBold,
     color: '#FFFFFF',
-    fontSize: 11.5,
+    fontSize: 12,
     fontWeight: '700',
     letterSpacing: 0.8,
   },
   placeSub: {
     ...typography.micro,
     color: 'rgba(255, 255, 255, 0.8)',
-    fontSize: 10,
+    fontSize: 10.5,
     lineHeight: 14,
     marginTop: 2,
   },

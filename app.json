@@ -62,7 +62,21 @@
           "photosPermission": "Allow Free Geo Tagging to save photos to your gallery.",
           "savePhotosPermission": "Allow Free Geo Tagging to save photos to your gallery."
         }
-      ]
+      ],
+      "expo-sharing",
+      [
+        "react-native-share",
+        {
+          "ios": [
+            "whatsapp"
+          ],
+          "android": [
+            "com.whatsapp"
+          ],
+          "enableBase64ShareAndroid": true
+        }
+      ],
+      "expo-build-properties"
     ]
   }
 }

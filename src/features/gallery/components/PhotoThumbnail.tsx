@@ -1,5 +1,6 @@
 import React from 'react';
 import { TouchableOpacity, Image, StyleSheet, View, Text } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { PhotoMetadata } from '../../../shared/types/photoTypes';
 import { formatAccuracy } from '../../../core/utils/locationFormatter';
 import { formatCaptureDate } from '../../../core/utils/dateTimeFormatter';
@@ -9,24 +10,47 @@ interface PhotoThumbnailProps {
   photo: PhotoMetadata;
   size: number;
   onPress: () => void;
+  onLongPress?: () => void;
+  isSelectionMode?: boolean;
+  isSelected?: boolean;
 }
 
 export const PhotoThumbnail: React.FC<PhotoThumbnailProps> = ({
   photo,
   size,
   onPress,
+  onLongPress,
+  isSelectionMode = false,
+  isSelected = false,
 }) => {
   return (
     <TouchableOpacity
       activeOpacity={0.8}
       onPress={onPress}
-      style={[styles.container, { width: size, height: size }]}
+      onLongPress={onLongPress}
+      style={[
+        styles.container,
+        { width: size, height: size },
+        isSelected && styles.containerSelected,
+      ]}
     >
       <Image
         source={{ uri: photo.processedUri }}
         style={styles.image}
         resizeMode="cover"
       />
+
+      {/* Selection Checkmark Badge */}
+      {isSelectionMode && (
+        <View style={styles.selectionBadge}>
+          {isSelected ? (
+            <Ionicons name="checkmark-circle" size={22} color="#007AFF" />
+          ) : (
+            <View style={styles.unselectedCircle} />
+          )}
+        </View>
+      )}
+
       <View style={styles.badgeOverlay}>
         <Text style={styles.badgeText}>
           {photo.location ? formatAccuracy(photo.location.accuracy) : 'NO GPS'}
@@ -44,6 +68,24 @@ const styles = StyleSheet.create({
     margin: 1.5,
     backgroundColor: '#1C1C1E',
     overflow: 'hidden',
+  },
+  containerSelected: {
+    borderWidth: 2.5,
+    borderColor: '#007AFF',
+  },
+  selectionBadge: {
+    position: 'absolute',
+    top: 6,
+    left: 6,
+    zIndex: 5,
+  },
+  unselectedCircle: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    borderWidth: 1.5,
+    borderColor: 'rgba(255, 255, 255, 0.85)',
+    backgroundColor: 'rgba(0, 0, 0, 0.4)',
   },
   image: {
     width: '100%',

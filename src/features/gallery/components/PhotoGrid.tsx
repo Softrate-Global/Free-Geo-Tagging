@@ -10,6 +10,10 @@ interface PhotoGridProps {
   onRefresh: () => void;
   onSelectPhoto: (photo: PhotoMetadata) => void;
   onGoToCamera: () => void;
+  isSelectionMode?: boolean;
+  selectedIds?: Set<string>;
+  onToggleSelect?: (photo: PhotoMetadata) => void;
+  onLongPressPhoto?: (photo: PhotoMetadata) => void;
 }
 
 export const PhotoGrid: React.FC<PhotoGridProps> = ({
@@ -18,6 +22,10 @@ export const PhotoGrid: React.FC<PhotoGridProps> = ({
   onRefresh,
   onSelectPhoto,
   onGoToCamera,
+  isSelectionMode = false,
+  selectedIds = new Set(),
+  onToggleSelect,
+  onLongPressPhoto,
 }) => {
   const { width } = useWindowDimensions();
 
@@ -35,12 +43,26 @@ export const PhotoGrid: React.FC<PhotoGridProps> = ({
       key={`grid-${numColumns}`}
       data={photos}
       keyExtractor={(item) => item.id}
+      extraData={[isSelectionMode, selectedIds]}
       numColumns={numColumns}
       renderItem={({ item }) => (
         <PhotoThumbnail
           photo={item}
           size={itemSize}
-          onPress={() => onSelectPhoto(item)}
+          isSelectionMode={isSelectionMode}
+          isSelected={selectedIds.has(item.id)}
+          onPress={() => {
+            if (isSelectionMode && onToggleSelect) {
+              onToggleSelect(item);
+            } else {
+              onSelectPhoto(item);
+            }
+          }}
+          onLongPress={() => {
+            if (onLongPressPhoto) {
+              onLongPressPhoto(item);
+            }
+          }}
         />
       )}
       contentContainerStyle={styles.content}

@@ -1,6 +1,7 @@
 export const APP_CONSTANTS = {
   APP_NAME: 'FREE GEO TAGGING',
   ALBUM_NAME: 'Free Geo Tagging',
+  ONBOARDING_COMPLETED_KEY: '@has_completed_onboarding_v1',
   
   // GPS Acquisition parameters
   TARGET_ACCURACY_METERS: 20, // Desired horizontal accuracy in meters
