@@ -117,7 +117,76 @@ export class LocationService {
       }
     } catch {}
 
-    // 2. Attempt Google Places & Geocoding (if API key configured)
+    // 2. Attempt Native Android / OS Geocoder (backed by Google Play Services on Android)
+    let nativeResult: {
+      placeName: string;
+      subAddress: string;
+      formattedAddress: string;
+      hasStreet: boolean;
+    } | null = null;
+
+    try {
+      const addresses = await Location.reverseGeocodeAsync({ latitude, longitude });
+      if (addresses && addresses.length > 0) {
+        const addr = addresses[0];
+        const street = addr.street || '';
+        const streetNumber = addr.streetNumber || '';
+        const streetFull = [streetNumber, street].filter(Boolean).join(' ') || street;
+        const district = addr.district || addr.subregion || '';
+        const city = addr.city || '';
+        const state = addr.region || '';
+        const postalCode = addr.postalCode || '';
+        const country = addr.country || 'India';
+
+        const placeName =
+          addr.name && !/^\d+[\w\s\-\/]*$/.test(addr.name.trim()) && addr.name !== street
+            ? addr.name
+            : streetFull || district || city || 'GPS LOCATION';
+
+        const subParts: string[] = [];
+        const placeLower = placeName.toLowerCase();
+
+        if (district && !placeLower.includes(district.toLowerCase())) subParts.push(district);
+        if (city && !placeLower.includes(city.toLowerCase())) subParts.push(city);
+        if (country && !placeLower.includes(country.toLowerCase()) && subParts.length < 2) subParts.push(country);
+        const subAddress = subParts.slice(0, 2).join(', ') || city || country || '';
+
+        const parts: string[] = [];
+        if (addr.name && !/^\d+[\w\s\-\/]*$/.test(addr.name.trim()) && addr.name !== street) {
+          parts.push(addr.name);
+        }
+        if (streetFull && !parts.includes(streetFull)) parts.push(streetFull);
+        if (district && !parts.includes(district)) parts.push(district);
+        if (city && !parts.includes(city)) {
+          if (postalCode) parts.push(`${city} - ${postalCode}`);
+          else parts.push(city);
+        }
+        if (state && !parts.includes(state)) parts.push(state);
+        if (country && !parts.includes(country)) parts.push(country);
+
+        const formattedAddress = parts.join(', ');
+
+        nativeResult = {
+          placeName,
+          subAddress,
+          formattedAddress,
+          hasStreet: Boolean(streetFull),
+        };
+      }
+    } catch (err) {
+      console.warn('Native geocoding notice:', err);
+    }
+
+    // If native geocoder provided a street-level address, use it!
+    if (nativeResult && nativeResult.hasStreet) {
+      return {
+        placeName: nativeResult.placeName,
+        subAddress: nativeResult.subAddress,
+        formattedAddress: nativeResult.formattedAddress,
+      };
+    }
+
+    // 3. Attempt Google Places & Geocoding (if API key configured)
     try {
       const googleResult = await GoogleMapsService.resolveLocation(latitude, longitude);
       if (googleResult && googleResult.placeName) {
@@ -125,7 +194,7 @@ export class LocationService {
       }
     } catch {}
 
-    // 3. Attempt Geoapify POI & Places resolution with strict distance filter
+    // 4. Attempt Geoapify POI & Places resolution with strict distance filter
     try {
       const geoapifyResult = await GeoapifyService.resolveLocation(latitude, longitude);
       if (geoapifyResult && geoapifyResult.placeName) {
@@ -133,76 +202,15 @@ export class LocationService {
       }
     } catch {}
 
-    // 2. Native Android Geocoder fallback (offline / zero key required)
-    try {
-      const addresses = await Location.reverseGeocodeAsync({ latitude, longitude });
-      if (!addresses || addresses.length === 0) return null;
-
-      const addr = addresses[0];
-
-      // 1. Formulate prominent place name
-      // If addr.name is purely digits/house number (e.g. "45") or empty, fallback to street or area
-      let placeName = addr.name;
-      if (!placeName || /^\d+[\w\s\-\/]*$/.test(placeName.trim())) {
-        placeName = addr.street || addr.district || addr.subregion || addr.city || 'GPS LOCATION';
-      }
-
-      // 2. Formulate concise sub-address (e.g. "Poonamallee, India" or "Mangadu, India")
-      const subParts: string[] = [];
-      const placeLower = placeName.toLowerCase();
-
-      if (addr.district && !placeLower.includes(addr.district.toLowerCase())) {
-        subParts.push(addr.district);
-      } else if (addr.city && !placeLower.includes(addr.city.toLowerCase())) {
-        subParts.push(addr.city);
-      } else if (addr.subregion && !placeLower.includes(addr.subregion.toLowerCase())) {
-        subParts.push(addr.subregion);
-      }
-
-      if (addr.country) {
-        subParts.push(addr.country);
-      } else if (addr.region) {
-        subParts.push(addr.region);
-      }
-
-      const subAddress = subParts.slice(0, 2).join(', ') || addr.city || addr.country || '';
-
-      // 3. Assemble full structured geographical address
-      const parts: string[] = [];
-
-      if (addr.street && addr.street !== addr.name) {
-        const streetFull = addr.streetNumber ? `${addr.streetNumber} ${addr.street}` : addr.street;
-        parts.push(streetFull);
-      } else if (addr.name && !parts.includes(addr.name)) {
-        parts.push(addr.name);
-      }
-
-      if (addr.district && !parts.includes(addr.district)) {
-        parts.push(addr.district);
-      }
-      if (addr.city && !parts.includes(addr.city)) {
-        parts.push(addr.city);
-      }
-      if (addr.region && !parts.includes(addr.region)) {
-        parts.push(addr.region);
-      }
-      if (addr.postalCode && !parts.includes(addr.postalCode)) {
-        parts.push(addr.postalCode);
-      }
-      if (addr.country && !parts.includes(addr.country)) {
-        parts.push(addr.country);
-      }
-
-      const formattedAddress = parts.join(', ');
-
+    // Fallback to native result if Geoapify didn't resolve
+    if (nativeResult) {
       return {
-        placeName,
-        subAddress,
-        formattedAddress,
+        placeName: nativeResult.placeName,
+        subAddress: nativeResult.subAddress,
+        formattedAddress: nativeResult.formattedAddress,
       };
-    } catch (err) {
-      console.warn('Reverse geocoding notice:', err);
-      return null;
     }
+
+    return null;
   }
 }

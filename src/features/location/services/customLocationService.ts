@@ -93,12 +93,13 @@ export class CustomLocationService {
         return closest;
       }
 
-      // 2. Fallback to known facility presets
+      // 2. Fallback to known facility presets (allow up to 500m to accommodate indoor GPS drift)
+      const presetMaxDistance = Math.max(maxDistanceMeters, 500);
       for (const preset of DEFAULT_PRESET_LOCATIONS) {
         const dist = calculateDistanceMeters(latitude, longitude, preset.latitude, preset.longitude);
-        if (dist <= minDistance) {
-          minDistance = dist;
+        if (dist <= presetMaxDistance) {
           closest = preset;
+          break;
         }
       }
 
