@@ -7,6 +7,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { StatusBar } from 'expo-status-bar';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { PermissionService } from '../../permissions/services/permissionService';
 
@@ -42,9 +43,12 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ navigation }) => {
 
   return (
     <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
+      {/* Dark status bar text/icons (time, battery, wifi) visible on white background */}
+      <StatusBar style="dark" />
+
       {/* ──────── TOP DECORATIVE & SKELETON CAMERA SECTION ──────── */}
       <View style={styles.illustrationArea}>
-        {/* Floating Festive Confetti Shapes matching reference */}
+        {/* Spacious, balanced floating festive party papers */}
         {/* 1. Top Left Pink Squiggle */}
         <View style={[styles.floatingItem, styles.posTopLeftSquiggle]}>
           <Text style={[styles.squiggleText, { color: '#F472B6' }]}>~</Text>
@@ -60,43 +64,43 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ navigation }) => {
           <View style={styles.diamondGreen} />
         </View>
 
-        {/* 4. Upper Right Cyan Squiggle */}
+        {/* 4. Upper Left Purple Slash */}
+        <View style={[styles.floatingItem, styles.posUpperLeftSlash]}>
+          <View style={styles.slashPurple} />
+        </View>
+
+        {/* 5. Upper Right Cyan Squiggle */}
         <View style={[styles.floatingItem, styles.posUpperRightSquiggle]}>
           <Text style={[styles.squiggleText, { color: '#06B6D4' }]}>~</Text>
         </View>
 
-        {/* 5. Mid Left Cyan Hollow Square */}
+        {/* 6. Mid Left Cyan Hollow Square */}
         <View style={[styles.floatingItem, styles.posMidLeftSquare]}>
           <View style={styles.squareCyan} />
         </View>
 
-        {/* 6. Lower Left Green Dot */}
+        {/* 7. Mid Right Purple Triangle */}
+        <View style={[styles.floatingItem, styles.posMidRightTriangle]}>
+          <View style={styles.trianglePurple} />
+        </View>
+
+        {/* 8. Lower Left Green Dot */}
         <View style={[styles.floatingItem, styles.posLowerLeftDot]}>
           <View style={styles.dotGreen} />
         </View>
 
-        {/* 7. Center Left Purple Slash */}
-        <View style={[styles.floatingItem, styles.posCenterLeftSlash]}>
-          <View style={styles.slashPurple} />
-        </View>
-
-        {/* 8. Top Near-Camera Purple Triangle */}
-        <View style={[styles.floatingItem, styles.posNearPurpleTriangle]}>
-          <View style={styles.trianglePurple} />
-        </View>
-
-        {/* 9. Lower Near-Camera Yellow Ring */}
-        <View style={[styles.floatingItem, styles.posNearYellowRing]}>
+        {/* 9. Lower Center Yellow Ring */}
+        <View style={[styles.floatingItem, styles.posLowerCenterRing]}>
           <View style={styles.ringYellow} />
         </View>
 
-        {/* 10. Right Near-Camera Cyan Squiggle */}
-        <View style={[styles.floatingItem, styles.posNearCyanSquiggle]}>
+        {/* 10. Lower Right Cyan Squiggle */}
+        <View style={[styles.floatingItem, styles.posLowerRightSquiggle]}>
           <Text style={[styles.squiggleText, { color: '#22D3EE' }]}>~</Text>
         </View>
 
-        {/* 11. Lower Right Purple Triangle */}
-        <View style={[styles.floatingItem, styles.posLowerRightTriangle]}>
+        {/* 11. Bottom Right Soft Purple Triangle */}
+        <View style={[styles.floatingItem, styles.posBottomRightTriangle]}>
           <View style={styles.triangleSoftPurple} />
         </View>
 
@@ -126,12 +130,19 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ navigation }) => {
 
       {/* ──────── MIDDLE CONTENT SECTION ──────── */}
       <View style={styles.contentArea}>
-        {/* Primary Headline with Current App Name */}
-        <Text style={styles.headlineText}>Welcome To Free Geo Tagging</Text>
+        {/* Single-line Headline with Current App Name */}
+        <Text
+          style={styles.headlineText}
+          numberOfLines={1}
+          adjustsFontSizeToFit
+          minimumFontScale={0.85}
+        >
+          Welcome to Free Geo Tagging
+        </Text>
 
-        {/* Supporting Description with Current App Name */}
-        <Text style={styles.descriptionText}>
-          Please turn on your GPS so that Free Geo Tagging can accurately geotag your photographs with your exact building, company, and location details.
+        {/* Short, punchy 2-line description */}
+        <Text style={styles.descriptionText} numberOfLines={2}>
+          Turn on GPS so Free Geo Tagging can accurately geotag your photos with company and address details.
         </Text>
       </View>
 
@@ -161,17 +172,18 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   illustrationArea: {
-    flex: 1.3,
+    flex: 1.4,
     alignItems: 'center',
     justifyContent: 'center',
     position: 'relative',
-    marginTop: 20,
+    marginTop: 10,
   },
 
   /* ──────── Skeleton / Line-Art Camera Icon (No Background Blob) ──────── */
   skeletonCameraWrapper: {
     alignItems: 'center',
     justifyContent: 'center',
+    zIndex: 1,
   },
   shutterTab: {
     width: 26,
@@ -183,29 +195,29 @@ const styles = StyleSheet.create({
     marginBottom: -1,
   },
   skeletonCameraBody: {
-    width: 130,
-    height: 88,
+    width: 136,
+    height: 92,
     backgroundColor: 'transparent',
     borderColor: '#000000',
     borderWidth: 3.5,
-    borderRadius: 22,
+    borderRadius: 24,
     alignItems: 'center',
     justifyContent: 'center',
     position: 'relative',
   },
   flashWindow: {
     position: 'absolute',
-    top: 12,
-    right: 14,
+    top: 13,
+    right: 15,
     width: 10,
     height: 10,
     borderRadius: 5,
     backgroundColor: '#000000',
   },
   lensRingOuter: {
-    width: 58,
-    height: 58,
-    borderRadius: 29,
+    width: 60,
+    height: 60,
+    borderRadius: 30,
     borderWidth: 3.5,
     borderColor: '#000000',
     backgroundColor: 'transparent',
@@ -213,9 +225,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   lensRingInner: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 42,
+    height: 42,
+    borderRadius: 21,
     borderWidth: 2.2,
     borderColor: '#000000',
     backgroundColor: 'transparent',
@@ -223,9 +235,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   lensPupil: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
+    width: 22,
+    height: 22,
+    borderRadius: 11,
     backgroundColor: '#000000',
     position: 'relative',
   },
@@ -233,13 +245,13 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 3,
     right: 3,
-    width: 4,
-    height: 4,
-    borderRadius: 2,
+    width: 4.5,
+    height: 4.5,
+    borderRadius: 2.25,
     backgroundColor: '#FFFFFF',
   },
 
-  /* ──────── Floating Decorative Elements ──────── */
+  /* ──────── Spacious & Balanced Festive Floating Elements ──────── */
   floatingItem: {
     position: 'absolute',
     zIndex: 2,
@@ -250,13 +262,13 @@ const styles = StyleSheet.create({
     lineHeight: 28,
   },
   posTopLeftSquiggle: {
-    top: 30,
-    left: 45,
+    top: 25,
+    left: 42,
     transform: [{ rotate: '25deg' }],
   },
   posTopCenterTriangle: {
-    top: 65,
-    left: '38%',
+    top: 15,
+    left: '48%',
   },
   triangleYellow: {
     width: 0,
@@ -272,25 +284,36 @@ const styles = StyleSheet.create({
     transform: [{ rotate: '45deg' }],
   },
   posTopRightDiamond: {
-    top: 25,
-    right: 50,
+    top: 22,
+    right: 42,
   },
   diamondGreen: {
-    width: 13,
-    height: 13,
+    width: 14,
+    height: 14,
     borderColor: '#86EFAC',
     borderWidth: 2,
     borderRadius: 3,
     transform: [{ rotate: '45deg' }],
   },
+  posUpperLeftSlash: {
+    top: 90,
+    left: 35,
+  },
+  slashPurple: {
+    width: 36,
+    height: 2.5,
+    backgroundColor: '#818CF8',
+    transform: [{ rotate: '-35deg' }],
+    borderRadius: 1,
+  },
   posUpperRightSquiggle: {
-    top: 105,
-    right: 60,
+    top: 85,
+    right: 36,
     transform: [{ rotate: '-15deg' }],
   },
   posMidLeftSquare: {
-    top: 160,
-    left: 40,
+    top: 165,
+    left: 28,
   },
   squareCyan: {
     width: 14,
@@ -300,9 +323,24 @@ const styles = StyleSheet.create({
     borderRadius: 3.5,
     transform: [{ rotate: '20deg' }],
   },
+  posMidRightTriangle: {
+    top: 155,
+    right: 30,
+  },
+  trianglePurple: {
+    width: 0,
+    height: 0,
+    borderLeftWidth: 6,
+    borderRightWidth: 6,
+    borderBottomWidth: 11,
+    borderLeftColor: 'transparent',
+    borderRightColor: 'transparent',
+    borderBottomColor: '#A855F7',
+    transform: [{ rotate: '70deg' }],
+  },
   posLowerLeftDot: {
-    bottom: 35,
-    left: 48,
+    bottom: 25,
+    left: 55,
   },
   dotGreen: {
     width: 7,
@@ -310,51 +348,25 @@ const styles = StyleSheet.create({
     borderRadius: 3.5,
     backgroundColor: '#22C55E',
   },
-  posCenterLeftSlash: {
-    top: 135,
-    left: 85,
-  },
-  slashPurple: {
-    width: 38,
-    height: 2.5,
-    backgroundColor: '#818CF8',
-    transform: [{ rotate: '-35deg' }],
-    borderRadius: 1,
-  },
-  posNearPurpleTriangle: {
-    top: 110,
-    left: '34%',
-  },
-  trianglePurple: {
-    width: 0,
-    height: 0,
-    borderLeftWidth: 5,
-    borderRightWidth: 5,
-    borderBottomWidth: 9,
-    borderLeftColor: 'transparent',
-    borderRightColor: 'transparent',
-    borderBottomColor: '#A855F7',
-    transform: [{ rotate: '70deg' }],
-  },
-  posNearYellowRing: {
-    bottom: 50,
-    left: '39%',
+  posLowerCenterRing: {
+    bottom: 18,
+    left: '47%',
   },
   ringYellow: {
-    width: 11,
-    height: 11,
-    borderRadius: 5.5,
+    width: 12,
+    height: 12,
+    borderRadius: 6,
     borderColor: '#FBBF24',
     borderWidth: 2,
   },
-  posNearCyanSquiggle: {
-    bottom: 65,
-    right: 75,
+  posLowerRightSquiggle: {
+    bottom: 25,
+    right: 55,
     transform: [{ rotate: '15deg' }],
   },
-  posLowerRightTriangle: {
-    bottom: 45,
-    right: 45,
+  posBottomRightTriangle: {
+    bottom: 55,
+    right: 25,
   },
   triangleSoftPurple: {
     width: 0,
@@ -371,30 +383,31 @@ const styles = StyleSheet.create({
   /* ──────── Middle Content Section ──────── */
   contentArea: {
     alignItems: 'center',
-    paddingHorizontal: 28,
-    marginBottom: 28,
+    paddingHorizontal: 20,
+    marginBottom: 20,
   },
   headlineText: {
-    fontSize: 24,
+    fontSize: 20,
     fontWeight: '800',
     color: '#0F172A',
     textAlign: 'center',
-    letterSpacing: 0.3,
-    marginBottom: 14,
+    letterSpacing: 0.2,
+    marginBottom: 8,
+    width: '100%',
   },
   descriptionText: {
-    fontSize: 14.5,
+    fontSize: 13.5,
     color: '#64748B',
     textAlign: 'center',
-    lineHeight: 22.5,
+    lineHeight: 20,
     letterSpacing: 0.1,
-    paddingHorizontal: 4,
+    paddingHorizontal: 16,
   },
 
   /* ──────── Bottom Solid Black Button Section ──────── */
   bottomArea: {
     paddingHorizontal: 24,
-    paddingBottom: 24,
+    paddingBottom: 20,
     width: '100%',
   },
   getStartedButton: {
