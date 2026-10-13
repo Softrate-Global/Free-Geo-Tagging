@@ -96,6 +96,61 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ navigation }) => {
             <View style={styles.triangleSoftPurple} />
           </View>
 
+          {/* 10. Top Inner Left Coral Dot (Near Shutter) */}
+          <View style={[styles.floatingItem, styles.posTopInnerLeftCoralDot]}>
+            <View style={styles.dotCoral} />
+          </View>
+
+          {/* 11. Top Inner Right Indigo Slash */}
+          <View style={[styles.floatingItem, styles.posTopInnerRightIndigoSlash]}>
+            <View style={styles.slashIndigo} />
+          </View>
+
+          {/* 12. Upper Left Orange Diamond */}
+          <View style={[styles.floatingItem, styles.posUpperLeftOrangeDiamond]}>
+            <View style={styles.diamondOrange} />
+          </View>
+
+          {/* 13. Upper Right Rose Squiggle */}
+          <View style={[styles.floatingItem, styles.posUpperRightRoseSquiggle]}>
+            <Text style={[styles.squiggleText, { color: '#FB7185', fontSize: 20 }]}>~</Text>
+          </View>
+
+          {/* 14. Camera Top-Right Mint Dot */}
+          <View style={[styles.floatingItem, styles.posCameraTopRightMintDot]}>
+            <View style={styles.dotMint} />
+          </View>
+
+          {/* 15. Camera Left Teal Ribbon */}
+          <View style={[styles.floatingItem, styles.posCameraLeftTealRibbon]}>
+            <View style={styles.ribbonTeal} />
+          </View>
+
+          {/* 16. Camera Right Violet Square */}
+          <View style={[styles.floatingItem, styles.posCameraRightVioletSquare]}>
+            <View style={styles.squareViolet} />
+          </View>
+
+          {/* 17. Lower Left Sky Blue Ring */}
+          <View style={[styles.floatingItem, styles.posLowerLeftBlueRing]}>
+            <View style={styles.ringBlue} />
+          </View>
+
+          {/* 18. Lower Right Emerald Slash */}
+          <View style={[styles.floatingItem, styles.posLowerRightEmeraldSlash]}>
+            <View style={styles.slashEmerald} />
+          </View>
+
+          {/* 19. Bottom Left Pink Dot */}
+          <View style={[styles.floatingItem, styles.posBottomLeftPinkDot]}>
+            <View style={styles.dotPink} />
+          </View>
+
+          {/* 20. Bottom Mid Amber Triangle */}
+          <View style={[styles.floatingItem, styles.posBottomMidAmberTriangle]}>
+            <View style={styles.triangleAmber} />
+          </View>
+
           {/* ──────── BLACK SKELETON CAMERA ICON ──────── */}
           <View style={styles.skeletonCameraWrapper}>
             {/* Top Shutter Tab */}
@@ -362,6 +417,126 @@ const styles = StyleSheet.create({
     borderRightColor: 'transparent',
     borderBottomColor: '#C084FC',
     transform: [{ rotate: '-25deg' }],
+  },
+
+  /* ──────── Additional Party Papers Near Camera Icon ──────── */
+  posTopInnerLeftCoralDot: {
+    top: 32,
+    left: 68,
+  },
+  dotCoral: {
+    width: 7,
+    height: 7,
+    borderRadius: 3.5,
+    backgroundColor: '#FB923C',
+  },
+  posTopInnerRightIndigoSlash: {
+    top: 30,
+    right: 65,
+  },
+  slashIndigo: {
+    width: 22,
+    height: 2.5,
+    backgroundColor: '#6366F1',
+    transform: [{ rotate: '40deg' }],
+    borderRadius: 1,
+  },
+  posUpperLeftOrangeDiamond: {
+    top: 48,
+    left: 32,
+  },
+  diamondOrange: {
+    width: 10,
+    height: 10,
+    borderColor: '#F97316',
+    borderWidth: 2,
+    borderRadius: 2,
+    transform: [{ rotate: '45deg' }],
+  },
+  posUpperRightRoseSquiggle: {
+    top: 45,
+    right: 34,
+    transform: [{ rotate: '30deg' }],
+  },
+  posCameraTopRightMintDot: {
+    top: 34,
+    right: 108,
+  },
+  dotMint: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: '#34D399',
+  },
+  posCameraLeftTealRibbon: {
+    top: 130,
+    left: 20,
+  },
+  ribbonTeal: {
+    width: 20,
+    height: 2.5,
+    backgroundColor: '#14B8A6',
+    transform: [{ rotate: '-45deg' }],
+    borderRadius: 1,
+  },
+  posCameraRightVioletSquare: {
+    top: 132,
+    right: 22,
+  },
+  squareViolet: {
+    width: 11,
+    height: 11,
+    borderColor: '#A855F7',
+    borderWidth: 2,
+    borderRadius: 2.5,
+    transform: [{ rotate: '15deg' }],
+  },
+  posLowerLeftBlueRing: {
+    bottom: 48,
+    left: 36,
+  },
+  ringBlue: {
+    width: 11,
+    height: 11,
+    borderRadius: 5.5,
+    borderColor: '#38BDF8',
+    borderWidth: 2,
+  },
+  posLowerRightEmeraldSlash: {
+    bottom: 46,
+    right: 40,
+  },
+  slashEmerald: {
+    width: 22,
+    height: 2.5,
+    backgroundColor: '#10B981',
+    transform: [{ rotate: '-30deg' }],
+    borderRadius: 1,
+  },
+  posBottomLeftPinkDot: {
+    bottom: 14,
+    left: 62,
+  },
+  dotPink: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: '#EC4899',
+  },
+  posBottomMidAmberTriangle: {
+    bottom: 12,
+    left: '32%',
+  },
+  triangleAmber: {
+    width: 0,
+    height: 0,
+    borderLeftWidth: 5,
+    borderRightWidth: 5,
+    borderBottomWidth: 9,
+    borderLeftColor: 'transparent',
+    borderRightColor: 'transparent',
+    borderBottomColor: '#F59E0B',
+    transform: [{ rotate: '15deg' }],
   },
 
   /* ──────── Middle Content Section ──────── */
