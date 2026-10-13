@@ -1,35 +1,41 @@
 import * as MediaLibrary from 'expo-media-library/legacy';
-import * as FileSystem from 'expo-file-system/legacy';
+import { File, Directory, Paths } from 'expo-file-system';
 import { PhotoMetadata } from '../../../shared/types/photoTypes';
 import { APP_CONSTANTS } from '../../../core/constants/appConstants';
 import { LocalMetadataService } from '../../../shared/services/localMetadataService';
 
 export class GalleryService {
   /**
-   * Saves a processed watermarked photograph to the Android public gallery in the "GPS Camera" album.
+   * Saves a processed watermarked photograph to persistent offline storage
+   * and optionally exports to the Android public MediaStore album if supported.
    */
   static async saveToPublicGallery(
     tempImageUri: string,
     filename?: string
   ): Promise<{ assetId?: string; publicUri: string }> {
     const safeFilename = filename || `IMG_${Date.now()}.jpg`;
-    const permanentDirectory = `${FileSystem.documentDirectory}photos/`;
 
-    // 1. Ensure permanent offline directory exists
-    await FileSystem.makeDirectoryAsync(permanentDirectory, { intermediates: true }).catch(() => {});
-    const permanentLocalUri = `${permanentDirectory}${safeFilename}`;
+    let permanentLocalUri = tempImageUri;
 
-    // 2. Copy image into permanent offline documents storage
+    // 1. Permanently persist image in app offline document directory using modern SDK 57 File API
     try {
-      await FileSystem.copyAsync({ from: tempImageUri, to: permanentLocalUri });
-    } catch (copyErr) {
-      console.warn('Notice: fallback to tempImageUri for storage', copyErr);
+      const photosDir = new Directory(Paths.document, 'photos');
+      if (!photosDir.exists) {
+        photosDir.create();
+      }
+      const destFile = new File(photosDir, safeFilename);
+      const srcFile = new File(tempImageUri);
+      await srcFile.copy(destFile);
+      permanentLocalUri = destFile.uri;
+    } catch {
+      // If direct copy fails, continue with tempImageUri
+      permanentLocalUri = tempImageUri;
     }
 
     let assetId: string | undefined;
     let publicUri: string = permanentLocalUri;
 
-    // 3. Attempt public Android MediaStore album export (supported in standalone/dev builds)
+    // 2. Attempt public Android MediaStore album export (available in development / standalone builds)
     try {
       const asset = await MediaLibrary.createAssetAsync(permanentLocalUri);
       if (asset) {
@@ -43,14 +49,13 @@ export class GalleryService {
           } else {
             await MediaLibrary.addAssetsToAlbumAsync([asset], album, false);
           }
-        } catch (albumErr) {
-          console.warn('Album organization notice:', albumErr);
+        } catch {
+          // Album grouping notice
         }
       }
-    } catch (mediaLibErr) {
-      // In Expo Go on Android 13+, public media library access is restricted by Google Play policy.
-      // Photos remain safely persisted in the app offline storage.
-      console.warn('Public album export bypassed (safely saved in local app gallery):', mediaLibErr);
+    } catch {
+      // In Expo Go on Android 13+, public media library export is restricted by Google Play policy.
+      // Photo is safely saved in local offline app gallery.
     }
 
     return {
@@ -70,21 +75,21 @@ export class GalleryService {
     if (photo.mediaAssetId) {
       try {
         await MediaLibrary.deleteAssetsAsync([photo.mediaAssetId]);
-      } catch (err) {
-        console.warn('Could not delete asset from MediaLibrary directly', err);
+      } catch {
+        // Media library delete notice
       }
     }
 
-    // 3. Clean up processed temporary file if it was in file system
+    // 3. Clean up offline image file
     try {
       if (photo.processedUri.startsWith('file://')) {
-        const info = await FileSystem.getInfoAsync(photo.processedUri);
-        if (info.exists) {
-          await FileSystem.deleteAsync(photo.processedUri, { idempotent: true });
+        const file = new File(photo.processedUri);
+        if (file.exists) {
+          file.delete();
         }
       }
-    } catch (err) {
-      console.warn('Could not delete temporary image file', err);
+    } catch {
+      // File delete notice
     }
   }
 
