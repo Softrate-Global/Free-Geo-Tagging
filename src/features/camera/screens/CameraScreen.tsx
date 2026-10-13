@@ -6,6 +6,7 @@ import {
   useWindowDimensions,
   Image,
   Alert,
+  AppState,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { CameraView, CameraType, FlashMode, useCameraPermissions } from 'expo-camera';
@@ -46,6 +47,7 @@ export const CameraScreen: React.FC<CameraScreenProps> = ({ navigation }) => {
   // Permissions
   const [cameraPermission, requestCameraPermission] = useCameraPermissions();
   const [hasMediaPermission, setHasMediaPermission] = useState<boolean | null>(null);
+  const [isRequestingPerms, setIsRequestingPerms] = useState(false);
 
   // GPS Sensor Hook
   const { currentLocation, gpsStatus, isAcquiring, refreshLocation } = useLocation();
@@ -84,12 +86,47 @@ export const CameraScreen: React.FC<CameraScreenProps> = ({ navigation }) => {
     loadRecentThumbnail();
   }, []);
 
+  // Re-check permissions when returning from device Settings
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', (nextAppState) => {
+      if (nextAppState === 'active') {
+        requestCameraPermission();
+        refreshLocation();
+        PermissionService.checkAllPermissions().then((all) => {
+          setHasMediaPermission(all.mediaGranted);
+        });
+      }
+    });
+
+    return () => {
+      subscription.remove();
+    };
+  }, [refreshLocation, requestCameraPermission]);
+
   const handleRequestAllPermissions = async () => {
-    await requestCameraPermission();
-    await PermissionService.requestLocation();
-    const mediaOk = await PermissionService.requestMediaLibrary();
-    setHasMediaPermission(mediaOk);
-    refreshLocation();
+    try {
+      setIsRequestingPerms(true);
+      const camRes = await requestCameraPermission();
+      const locRes = await PermissionService.requestLocation();
+      const mediaOk = await PermissionService.requestMediaLibrary();
+      setHasMediaPermission(mediaOk);
+      await refreshLocation();
+
+      if (!camRes?.granted || !locRes) {
+        Alert.alert(
+          'Permissions Required',
+          'Camera and Location permissions are required for the live viewfinder and offline GPS watermarking. Please enable them in app settings.',
+          [
+            { text: 'Cancel', style: 'cancel' },
+            { text: 'Open Settings', onPress: PermissionService.openSettings },
+          ]
+        );
+      }
+    } catch (err) {
+      console.warn('Error requesting permissions:', err);
+    } finally {
+      setIsRequestingPerms(false);
+    }
   };
 
   const handleToggleFacing = () => {
@@ -143,10 +180,13 @@ export const CameraScreen: React.FC<CameraScreenProps> = ({ navigation }) => {
       setProcessingStatus('Embedding watermark pixels...');
       const watermarkedUri = await WatermarkService.compositeWatermark(viewShotRef);
 
-      // Step 5: Save processed image to public Android MediaStore "GPS Camera" album
+      // Step 5: Save processed image to permanent storage and public Free Geo Tagging album
       setProcessingStatus('Saving to Free Geo Tagging album...');
       const filename = generatePhotoFilename(captureTimestamp);
-      const { assetId, publicUri } = await GalleryService.saveToPublicGallery(watermarkedUri);
+      const { assetId, publicUri } = await GalleryService.saveToPublicGallery(
+        watermarkedUri,
+        filename
+      );
 
       // Step 6: Persist photo metadata offline
       const photoMetadata: PhotoMetadata = {
@@ -181,10 +221,9 @@ export const CameraScreen: React.FC<CameraScreenProps> = ({ navigation }) => {
     }
   };
 
-  // Permission Guard
+  // Permission Guard: Camera and GPS Location are the critical hardware prerequisites for the live viewfinder
   const needsPermission =
     !cameraPermission?.granted ||
-    hasMediaPermission === false ||
     gpsStatus === 'PERMISSION_DENIED';
 
   if (needsPermission) {
@@ -193,6 +232,7 @@ export const CameraScreen: React.FC<CameraScreenProps> = ({ navigation }) => {
         cameraMissing={!cameraPermission?.granted}
         locationMissing={gpsStatus === 'PERMISSION_DENIED'}
         mediaMissing={hasMediaPermission === false}
+        loading={isRequestingPerms}
         onRequestPermissions={handleRequestAllPermissions}
       />
     );

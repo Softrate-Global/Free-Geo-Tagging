@@ -11,6 +11,7 @@ interface PermissionRequestViewProps {
   cameraMissing?: boolean;
   locationMissing?: boolean;
   mediaMissing?: boolean;
+  loading?: boolean;
   onRequestPermissions: () => void;
 }
 
@@ -18,6 +19,7 @@ export const PermissionRequestView: React.FC<PermissionRequestViewProps> = ({
   cameraMissing = false,
   locationMissing = false,
   mediaMissing = false,
+  loading = false,
   onRequestPermissions,
 }) => {
   return (
@@ -83,6 +85,7 @@ export const PermissionRequestView: React.FC<PermissionRequestViewProps> = ({
             onPress={onRequestPermissions}
             variant="primary"
             size="lg"
+            loading={loading}
             style={styles.actionBtn}
           />
 
