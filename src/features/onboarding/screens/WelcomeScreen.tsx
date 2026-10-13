@@ -171,7 +171,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 20,
-    marginTop: -10,
+    marginTop: -15,
   },
 
   /* ──────── Compact Hero Illustration Box Eliminates Giant White Canyon ──────── */
@@ -392,7 +392,7 @@ const styles = StyleSheet.create({
   /* ──────── Bottom Solid Black Button Section ──────── */
   bottomArea: {
     paddingHorizontal: 24,
-    paddingBottom: 24,
+    paddingBottom: 70,
     width: '100%',
   },
   getStartedButton: {
