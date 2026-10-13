@@ -52,84 +52,84 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ navigation }) => {
         {/* Compact, tightly-framed illustration box */}
         <View style={styles.illustrationBox}>
           {/* ──────── LOCATION, GPS, MAP, ROAD & LANDMARK ICONS FLOATING NEAR CAMERA ──────── */}
-          {/* 1. Top Left - Location Marker (Coral Red) */}
+          {/* 1. Top Left - Location Marker */}
           <View style={[styles.floatingItem, styles.posTopLeftLocation]}>
-            <Ionicons name="location" size={17} color="#EF4444" />
+            <Ionicons name="location" size={22} color="#000000" />
           </View>
 
-          {/* 2. Top Inner-Left - Satellite GPS (Royal Blue) */}
+          {/* 2. Top Inner-Left - Satellite GPS */}
           <View style={[styles.floatingItem, styles.posTopInnerLeftSatellite]}>
-            <MaterialCommunityIcons name="satellite-variant" size={16} color="#3B82F6" />
+            <MaterialCommunityIcons name="satellite-variant" size={20} color="#000000" />
           </View>
 
-          {/* 3. Top Center - Compass (Golden Amber) */}
+          {/* 3. Top Center - Compass */}
           <View style={[styles.floatingItem, styles.posTopCenterCompass]}>
-            <Ionicons name="compass-outline" size={18} color="#F59E0B" />
+            <Ionicons name="compass-outline" size={23} color="#000000" />
           </View>
 
-          {/* 4. Top Inner-Right - Route / Road Path (Teal) */}
+          {/* 4. Top Inner-Right - Route / Road Path */}
           <View style={[styles.floatingItem, styles.posTopInnerRightRoute]}>
-            <MaterialCommunityIcons name="routes" size={17} color="#0D9488" />
+            <MaterialCommunityIcons name="routes" size={21} color="#000000" />
           </View>
 
-          {/* 5. Top Right - Folded Map (Emerald Green) */}
+          {/* 5. Top Right - Folded Map */}
           <View style={[styles.floatingItem, styles.posTopRightMap]}>
-            <Ionicons name="map-outline" size={17} color="#10B981" />
+            <Ionicons name="map-outline" size={22} color="#000000" />
           </View>
 
-          {/* 6. Upper-Left - Globe / Earth (Sky Blue) */}
+          {/* 6. Upper-Left - Globe / Earth */}
           <View style={[styles.floatingItem, styles.posUpperLeftGlobe]}>
-            <Ionicons name="globe-outline" size={16} color="#0284C7" />
+            <Ionicons name="globe-outline" size={21} color="#000000" />
           </View>
 
-          {/* 7. Mid-Left - GPS Crosshair / Target (Rose) */}
+          {/* 7. Mid-Left - GPS Crosshair / Target */}
           <View style={[styles.floatingItem, styles.posMidLeftCrosshair]}>
-            <MaterialCommunityIcons name="crosshairs-gps" size={17} color="#F43F5E" />
+            <MaterialCommunityIcons name="crosshairs-gps" size={21} color="#000000" />
           </View>
 
-          {/* 8. Lower-Left - Highway / Road (Indigo) */}
+          {/* 8. Lower-Left - Highway / Road */}
           <View style={[styles.floatingItem, styles.posLowerLeftRoad]}>
-            <MaterialCommunityIcons name="road-variant" size={18} color="#6366F1" />
+            <MaterialCommunityIcons name="road-variant" size={22} color="#000000" />
           </View>
 
-          {/* 9. Upper-Right - Road Signpost (Vibrant Orange) */}
+          {/* 9. Upper-Right - Road Signpost */}
           <View style={[styles.floatingItem, styles.posUpperRightSignpost]}>
-            <Ionicons name="trail-sign-outline" size={17} color="#F97316" />
+            <Ionicons name="trail-sign-outline" size={21} color="#000000" />
           </View>
 
-          {/* 10. Mid-Right - GPS Navigation Arrow (Cyan) */}
+          {/* 10. Mid-Right - GPS Navigation Arrow */}
           <View style={[styles.floatingItem, styles.posMidRightNavigate]}>
-            <Ionicons name="navigate" size={16} color="#06B6D4" />
+            <Ionicons name="navigate" size={20} color="#000000" />
           </View>
 
-          {/* 11. Lower-Right - Landmark / Building (Violet) */}
+          {/* 11. Lower-Right - Landmark / Building */}
           <View style={[styles.floatingItem, styles.posLowerRightLandmark]}>
-            <Ionicons name="business-outline" size={17} color="#8B5CF6" />
+            <Ionicons name="business-outline" size={22} color="#000000" />
           </View>
 
-          {/* 12. Bottom Left - Map Pin (Purple) */}
+          {/* 12. Bottom Left - Map Pin */}
           <View style={[styles.floatingItem, styles.posBottomLeftPin]}>
-            <Ionicons name="pin" size={16} color="#A855F7" />
+            <Ionicons name="pin" size={21} color="#000000" />
           </View>
 
-          {/* 13. Bottom Inner-Left - Destination Flag (Mint) */}
+          {/* 13. Bottom Inner-Left - Destination Flag */}
           <View style={[styles.floatingItem, styles.posBottomInnerLeftFlag]}>
-            <Ionicons name="flag" size={15} color="#059669" />
+            <Ionicons name="flag" size={20} color="#000000" />
           </View>
 
-          {/* 14. Bottom Center - Direction Navigate Circle (Amber) */}
+          {/* 14. Bottom Center - Direction Navigate Circle */}
           <View style={[styles.floatingItem, styles.posBottomCenterNavigate]}>
-            <Ionicons name="navigate-circle-outline" size={18} color="#D97706" />
+            <Ionicons name="navigate-circle-outline" size={23} color="#000000" />
           </View>
 
-          {/* 15. Bottom Inner-Right - City Skyline Landmark (Fuchsia) */}
+          {/* 15. Bottom Inner-Right - City Skyline Landmark */}
           <View style={[styles.floatingItem, styles.posBottomInnerRightCity]}>
-            <MaterialCommunityIcons name="city-variant-outline" size={16} color="#C026D3" />
+            <MaterialCommunityIcons name="city-variant-outline" size={21} color="#000000" />
           </View>
 
-          {/* 16. Bottom Right - GPS Radar Marker (Emerald) */}
+          {/* 16. Bottom Right - GPS Radar Marker */}
           <View style={[styles.floatingItem, styles.posBottomRightRadar]}>
-            <MaterialCommunityIcons name="map-marker-radius-outline" size={18} color="#10B981" />
+            <MaterialCommunityIcons name="map-marker-radius-outline" size={23} color="#000000" />
           </View>
 
           {/* ──────── BLACK SKELETON CAMERA ICON ──────── */}
