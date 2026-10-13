@@ -7,6 +7,7 @@ export interface WatermarkData {
   accuracy: number | null;
   altitude: number | null;
   placeName?: string | null;
+  subAddress?: string | null;
   formattedAddress?: string | null;
   captureTimestamp: number;
 }

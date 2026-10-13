@@ -96,23 +96,41 @@ export class LocationService {
   static async reverseGeocode(
     latitude: number,
     longitude: number
-  ): Promise<{ placeName: string; formattedAddress: string } | null> {
+  ): Promise<{ placeName: string; subAddress: string; formattedAddress: string } | null> {
     try {
       const addresses = await Location.reverseGeocodeAsync({ latitude, longitude });
       if (!addresses || addresses.length === 0) return null;
 
       const addr = addresses[0];
 
-      // Formulate prominent place name (e.g., landmark, building, street, or city)
-      const placeName =
-        addr.name ||
-        addr.street ||
-        addr.district ||
-        addr.subregion ||
-        addr.city ||
-        'GPS Location';
+      // 1. Formulate prominent place name
+      // If addr.name is purely digits/house number (e.g. "45") or empty, fallback to street or area
+      let placeName = addr.name;
+      if (!placeName || /^\d+[\w\s\-\/]*$/.test(placeName.trim())) {
+        placeName = addr.street || addr.district || addr.subregion || addr.city || 'GPS LOCATION';
+      }
 
-      // Assemble structured geographical address
+      // 2. Formulate concise sub-address (e.g. "Poonamallee, India" or "Mangadu, India")
+      const subParts: string[] = [];
+      const placeLower = placeName.toLowerCase();
+
+      if (addr.district && !placeLower.includes(addr.district.toLowerCase())) {
+        subParts.push(addr.district);
+      } else if (addr.city && !placeLower.includes(addr.city.toLowerCase())) {
+        subParts.push(addr.city);
+      } else if (addr.subregion && !placeLower.includes(addr.subregion.toLowerCase())) {
+        subParts.push(addr.subregion);
+      }
+
+      if (addr.country) {
+        subParts.push(addr.country);
+      } else if (addr.region) {
+        subParts.push(addr.region);
+      }
+
+      const subAddress = subParts.slice(0, 2).join(', ') || addr.city || addr.country || '';
+
+      // 3. Assemble full structured geographical address
       const parts: string[] = [];
 
       if (addr.street && addr.street !== addr.name) {
@@ -142,6 +160,7 @@ export class LocationService {
 
       return {
         placeName,
+        subAddress,
         formattedAddress,
       };
     } catch (err) {

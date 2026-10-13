@@ -168,6 +168,7 @@ export const CameraScreen: React.FC<CameraScreenProps> = ({ navigation }) => {
             finalLocation = {
               ...finalLocation,
               placeName: geo.placeName,
+              subAddress: geo.subAddress,
               formattedAddress: geo.formattedAddress,
             };
           }
@@ -401,7 +402,10 @@ const styles = StyleSheet.create({
   },
   watermarkAnchor: {
     position: 'absolute',
-    bottom: 24,
+    bottom: 36,
     left: 20,
+    right: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });

@@ -57,9 +57,9 @@ export const LocationStatus: React.FC<LocationStatusProps> = ({
               <Text style={styles.placeTitle} numberOfLines={1}>
                 {location.placeName.toUpperCase()}
               </Text>
-              {location.formattedAddress ? (
+              {location.subAddress || location.formattedAddress ? (
                 <Text style={styles.placeSub} numberOfLines={1}>
-                  {location.formattedAddress}
+                  {location.subAddress || location.formattedAddress}
                 </Text>
               ) : null}
             </View>

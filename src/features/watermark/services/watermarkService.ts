@@ -19,6 +19,7 @@ export class WatermarkService {
       accuracy: location ? location.accuracy : null,
       altitude: location ? location.altitude : null,
       placeName: location?.placeName ?? null,
+      subAddress: location?.subAddress ?? null,
       formattedAddress: location?.formattedAddress ?? null,
       captureTimestamp,
     };

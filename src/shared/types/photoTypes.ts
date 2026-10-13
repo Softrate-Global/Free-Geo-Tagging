@@ -15,6 +15,7 @@ export interface LocationData {
   speed: number | null;
   timestamp: number; // ms
   placeName?: string;
+  subAddress?: string;
   formattedAddress?: string;
 }
 
