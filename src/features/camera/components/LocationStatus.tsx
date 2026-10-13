@@ -1,8 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { GPSStatus, LocationData } from '../../../shared/types/photoTypes';
-import { formatLatitude, formatLongitude, formatAccuracy, getGPSStatusLabel } from '../../../core/utils/locationFormatter';
-import { colors } from '../../../core/theme/colors';
+import { getGPSStatusLabel } from '../../../core/utils/locationFormatter';
 import { typography } from '../../../core/theme/typography';
 import { spacing, borderRadius } from '../../../core/theme/spacing';
 
@@ -22,8 +21,11 @@ export const LocationStatus: React.FC<LocationStatusProps> = ({
   const isAcquired = status === 'ACQUIRED';
   const isWarning = status === 'INSUFFICIENT_ACCURACY';
 
+  const addressText = location?.formattedAddress || location?.subAddress || '';
+
   return (
     <View style={styles.container}>
+      {/* Header: GPS Status Dot + Label & Action Buttons */}
       <View style={styles.headerRow}>
         <View style={styles.indicatorContainer}>
           <View
@@ -64,43 +66,25 @@ export const LocationStatus: React.FC<LocationStatusProps> = ({
         </View>
       </View>
 
-      {location && (
-        <>
-          {location.placeName ? (
-            <TouchableOpacity
-              activeOpacity={onEditLocation ? 0.75 : 1}
-              onPress={onEditLocation}
-              style={styles.placeRow}
-            >
-              <View style={styles.placeTitleRow}>
-                <Text style={styles.placeTitle} numberOfLines={1}>
-                  {location.placeName.toUpperCase()}
-                </Text>
-              </View>
-              {location.subAddress || location.formattedAddress ? (
-                <Text style={styles.placeSub} numberOfLines={1}>
-                  {location.subAddress || location.formattedAddress}
-                </Text>
-              ) : null}
-            </TouchableOpacity>
-          ) : null}
-
-          <View style={styles.dataGrid}>
-            <View style={styles.dataItem}>
-              <Text style={styles.dataLabel}>LAT</Text>
-              <Text style={styles.dataVal}>{formatLatitude(location.latitude, 5)}</Text>
-            </View>
-            <View style={styles.dataItem}>
-              <Text style={styles.dataLabel}>LON</Text>
-              <Text style={styles.dataVal}>{formatLongitude(location.longitude, 5)}</Text>
-            </View>
-            <View style={styles.dataItem}>
-              <Text style={styles.dataLabel}>ACC</Text>
-              <Text style={styles.dataVal}>{formatAccuracy(location.accuracy)}</Text>
-            </View>
+      {/* Place / Building Name & Full Address (LAT, LON, ACC removed) */}
+      {location?.placeName ? (
+        <TouchableOpacity
+          activeOpacity={onEditLocation ? 0.75 : 1}
+          onPress={onEditLocation}
+          style={styles.placeRow}
+        >
+          <View style={styles.placeTitleRow}>
+            <Text style={styles.placeTitle} numberOfLines={1}>
+              {location.placeName.toUpperCase()}
+            </Text>
           </View>
-        </>
-      )}
+          {addressText ? (
+            <Text style={styles.placeSub} numberOfLines={2}>
+              {addressText}
+            </Text>
+          ) : null}
+        </TouchableOpacity>
+      ) : null}
     </View>
   );
 };
@@ -162,28 +146,6 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     letterSpacing: 0.5,
   },
-  dataGrid: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: spacing.xs,
-    paddingTop: spacing.xs,
-    borderTopWidth: 1,
-    borderTopColor: 'rgba(255, 255, 255, 0.12)',
-  },
-  dataItem: {
-    alignItems: 'flex-start',
-  },
-  dataLabel: {
-    ...typography.micro,
-    color: 'rgba(255, 255, 255, 0.5)',
-    letterSpacing: 0.6,
-  },
-  dataVal: {
-    ...typography.dataMono,
-    color: '#FFFFFF',
-    fontSize: 11,
-    fontWeight: '600',
-  },
   placeRow: {
     marginTop: spacing.xs,
     paddingTop: spacing.xs,
@@ -197,14 +159,15 @@ const styles = StyleSheet.create({
   placeTitle: {
     ...typography.captionBold,
     color: '#FFFFFF',
-    fontSize: 11,
+    fontSize: 11.5,
     fontWeight: '700',
     letterSpacing: 0.8,
   },
   placeSub: {
     ...typography.micro,
-    color: 'rgba(255, 255, 255, 0.7)',
-    fontSize: 9.5,
-    marginTop: 1,
+    color: 'rgba(255, 255, 255, 0.8)',
+    fontSize: 10,
+    lineHeight: 14,
+    marginTop: 2,
   },
 });
