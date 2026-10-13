@@ -33,6 +33,8 @@ import { colors } from '../../../core/theme/colors';
 import { typography } from '../../../core/theme/typography';
 import { spacing } from '../../../core/theme/spacing';
 import { PhotoPreviewModal } from '../components/PhotoPreviewModal';
+import { EditLocationModal } from '../components/EditLocationModal';
+import { CustomLocationService } from '../../location/services/customLocationService';
 
 interface PendingCapture {
   watermarkedUri: string;
@@ -71,6 +73,49 @@ export const CameraScreen: React.FC<CameraScreenProps> = ({ navigation }) => {
   // Pending Photo Preview State (Before saving to gallery)
   const [pendingPhoto, setPendingPhoto] = useState<PendingCapture | null>(null);
   const [isSavingPending, setIsSavingPending] = useState(false);
+
+  // Custom Location Override State
+  const [isEditLocationModalVisible, setIsEditLocationModalVisible] = useState(false);
+  const [customOverrideLocation, setCustomOverrideLocation] = useState<{
+    placeName: string;
+    subAddress: string;
+    formattedAddress: string;
+  } | null>(null);
+
+  const effectiveLocation: LocationData | null = currentLocation
+    ? {
+        ...currentLocation,
+        placeName: customOverrideLocation?.placeName ?? currentLocation.placeName,
+        subAddress: customOverrideLocation?.subAddress ?? currentLocation.subAddress,
+        formattedAddress: customOverrideLocation?.formattedAddress ?? currentLocation.formattedAddress,
+      }
+    : null;
+
+  const handleSaveCustomLocation = async (data: {
+    placeName: string;
+    subAddress: string;
+    formattedAddress: string;
+  }) => {
+    if (currentLocation) {
+      await CustomLocationService.saveLocation(
+        currentLocation.latitude,
+        currentLocation.longitude,
+        data
+      );
+    }
+    setCustomOverrideLocation(data);
+  };
+
+  const handleResetCustomLocation = async () => {
+    if (currentLocation) {
+      await CustomLocationService.clearSavedLocation(
+        currentLocation.latitude,
+        currentLocation.longitude
+      );
+    }
+    setCustomOverrideLocation(null);
+    refreshLocation();
+  };
 
   // Off-screen compositing state
   const [compositeImage, setCompositeImage] = useState<{
@@ -171,7 +216,7 @@ export const CameraScreen: React.FC<CameraScreenProps> = ({ navigation }) => {
 
       // Step 3: Prepare watermark parameters with Google Maps place name
       setProcessingStatus('Resolving location details...');
-      let finalLocation = currentLocation;
+      let finalLocation = effectiveLocation;
       if (finalLocation && !finalLocation.placeName) {
         try {
           const geo = await LocationService.reverseGeocode(
@@ -320,8 +365,9 @@ export const CameraScreen: React.FC<CameraScreenProps> = ({ navigation }) => {
         {/* GPS Live Status & Coordinates HUD */}
         <LocationStatus
           status={gpsStatus}
-          location={currentLocation}
+          location={effectiveLocation}
           onRefresh={refreshLocation}
+          onEditLocation={() => setIsEditLocationModalVisible(true)}
         />
 
         {/* Center Loading Indicator during capture processing */}
@@ -381,6 +427,21 @@ export const CameraScreen: React.FC<CameraScreenProps> = ({ navigation }) => {
         onSave={handleSavePendingPhoto}
         isSaving={isSavingPending}
       />
+
+      {/* Manual Location & Address Customization Modal */}
+      {effectiveLocation && (
+        <EditLocationModal
+          visible={isEditLocationModalVisible}
+          latitude={effectiveLocation.latitude}
+          longitude={effectiveLocation.longitude}
+          initialPlaceName={effectiveLocation.placeName || ''}
+          initialSubAddress={effectiveLocation.subAddress || ''}
+          initialFormattedAddress={effectiveLocation.formattedAddress || ''}
+          onSave={handleSaveCustomLocation}
+          onReset={handleResetCustomLocation}
+          onClose={() => setIsEditLocationModalVisible(false)}
+        />
+      )}
     </View>
   );
 };

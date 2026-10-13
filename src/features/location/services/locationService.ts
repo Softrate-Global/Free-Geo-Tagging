@@ -3,6 +3,9 @@ import { LocationData, GPSStatus } from '../../../shared/types/photoTypes';
 import { APP_CONSTANTS } from '../../../core/constants/appConstants';
 import { GeoapifyService } from './geoapifyService';
 
+import { CustomLocationService } from './customLocationService';
+import { GoogleMapsService } from './googleMapsService';
+
 export class LocationService {
   /**
    * Evaluates GPS status based on permission, service availability, and horizontal accuracy.
@@ -91,14 +94,38 @@ export class LocationService {
   }
 
   /**
-   * Reverse-geocodes coordinates into a readable place name and address
-   * matching Google Maps placemark data.
+   * Reverse-geocodes coordinates into a readable place name and address.
+   * Multi-tier resolution:
+   * 1. User-customized / remembered location memory (< 120m)
+   * 2. Google Places & Geocoding API (if key available)
+   * 3. Geoapify Places & Reverse Geocoding (with strict <= 40m distance guard)
+   * 4. Native OS Geocoder fallback
    */
   static async reverseGeocode(
     latitude: number,
     longitude: number
   ): Promise<{ placeName: string; subAddress: string; formattedAddress: string } | null> {
-    // 1. First attempt Geoapify POI & Places resolution
+    // 1. Check user-defined / remembered location memory (e.g. "SOFTRATE TECH PARK")
+    try {
+      const saved = await CustomLocationService.getSavedLocation(latitude, longitude);
+      if (saved && saved.placeName) {
+        return {
+          placeName: saved.placeName,
+          subAddress: saved.subAddress,
+          formattedAddress: saved.formattedAddress,
+        };
+      }
+    } catch {}
+
+    // 2. Attempt Google Places & Geocoding (if API key configured)
+    try {
+      const googleResult = await GoogleMapsService.resolveLocation(latitude, longitude);
+      if (googleResult && googleResult.placeName) {
+        return googleResult;
+      }
+    } catch {}
+
+    // 3. Attempt Geoapify POI & Places resolution with strict distance filter
     try {
       const geoapifyResult = await GeoapifyService.resolveLocation(latitude, longitude);
       if (geoapifyResult && geoapifyResult.placeName) {

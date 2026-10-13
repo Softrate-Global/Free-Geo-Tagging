@@ -22,9 +22,9 @@ export const WatermarkTemplate: React.FC<WatermarkTemplateProps> = ({ data, scal
         <View style={styles.flankLine} />
       </View>
 
-      {/* Bottom Row: Subtitle (e.g. Poonamallee, India) */}
+      {/* Bottom Row: Subtitle or Address (e.g. 60A, Velleeswarar Koil St, Mangadu or Poonamallee, India) */}
       {subtitle ? (
-        <Text style={styles.subAddressText} numberOfLines={1}>
+        <Text style={styles.subAddressText} numberOfLines={2}>
           {subtitle}
         </Text>
       ) : null}

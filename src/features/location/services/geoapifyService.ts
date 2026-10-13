@@ -35,8 +35,11 @@ export class GeoapifyService {
   }
 
   /**
-   * Queries Geoapify Places and Reverse Geocoding APIs to resolve
-   * exact business, building, or landmark identity (e.g. "SOFTRATE TECH PARK").
+   * Queries Geoapify Places and Reverse Geocoding APIs with strict proximity filtering
+   * to accurately extract house/building name, street address, and administrative hierarchy.
+   *
+   * Crucial rule: Distant amenities/landmarks (> 40m) are strictly REJECTED to prevent
+   * displaying unrelated temples, parks, or shops when the user is inside a company or home.
    */
   static async resolveLocation(
     latitude: number,
@@ -48,8 +51,8 @@ export class GeoapifyService {
     }
 
     try {
-      // Step 1: Query Places API for nearby commercial/office/tech park Points of Interest (within 150m)
-      const placesUrl = `https://api.geoapify.com/v2/places?categories=commercial,office,education,entertainment,catering,building,production&filter=circle:${longitude},${latitude},150&bias=proximity:${longitude},${latitude}&limit=3&apiKey=${apiKey}`;
+      // Step 1: Query Places API within immediate proximity (50m) for commercial/office/tech park POIs
+      const placesUrl = `https://api.geoapify.com/v2/places?categories=commercial,office,education,entertainment,catering,building,production&filter=circle:${longitude},${latitude},50&bias=proximity:${longitude},${latitude}&limit=3&apiKey=${apiKey}`;
 
       const placesPromise = fetch(placesUrl, {
         headers: { Accept: 'application/json' },
@@ -68,16 +71,17 @@ export class GeoapifyService {
         new Promise<[null, null]>((resolve) => setTimeout(() => resolve([null, null]), 4500)),
       ]);
 
-      let identifiedPlaceName: string | null = null;
+      let verifiedBuildingName: string | null = null;
 
-      // Extract POI from Places API
+      // Extract POI from Places API ONLY if strictly within 40 meters
       if (placesData?.features && placesData.features.length > 0) {
         for (const feat of placesData.features) {
           const name = feat?.properties?.name;
-          if (name && typeof name === 'string' && name.trim().length > 0) {
+          const distance = feat?.properties?.distance ?? 0;
+          if (name && typeof name === 'string' && name.trim().length > 0 && distance <= 40) {
             // Avoid generic house numbers
             if (!/^\d+[\w\s\-\/]*$/.test(name.trim())) {
-              identifiedPlaceName = name.trim();
+              verifiedBuildingName = name.trim();
               break;
             }
           }
@@ -86,37 +90,89 @@ export class GeoapifyService {
 
       // Extract reverse geocode properties
       const revProps = reverseData?.features?.[0]?.properties;
+      const revDistance = revProps?.distance ?? 0;
+      const resultType = revProps?.result_type;
 
-      // Fallback place name if not found in Places API
+      // Check if reverse geocode returned a building/amenity name
+      if (!verifiedBuildingName && revProps?.name) {
+        const rawName = revProps.name.trim();
+        // If it's an amenity or place, ONLY accept if user is actually right at it (<= 35m)
+        if (revDistance <= 35 || resultType === 'building') {
+          if (!/^\d+[\w\s\-\/]*$/.test(rawName)) {
+            verifiedBuildingName = rawName;
+          }
+        }
+      }
+
+      // Extract accurate street and address components
+      const houseNumber = revProps?.housenumber || '';
+      const streetName = revProps?.street || '';
+      const suburb = revProps?.suburb || revProps?.district || '';
+      const city = revProps?.city || revProps?.county || '';
+      const state = revProps?.state || '';
+      const postcode = revProps?.postcode || '';
+      const country = revProps?.country || 'India';
+
+      // Build street address line
+      const streetAddress = [houseNumber, streetName].filter(Boolean).join(', ') || streetName;
+
+      // Primary Place Name:
+      // 1. Verified building/company name (< 40m)
+      // 2. Street address (e.g. "60A Velleeswarar Koil St" or "Melma Nagar Main Road")
+      // 3. Suburb / Neighborhood
+      // 4. City
       const placeName =
-        identifiedPlaceName ||
-        revProps?.name ||
-        revProps?.street ||
-        revProps?.suburb ||
-        revProps?.district ||
-        revProps?.city ||
+        verifiedBuildingName ||
+        streetAddress ||
+        suburb ||
+        city ||
         'GPS LOCATION';
 
-      // Build concise sub-address (e.g. "Poonamallee, India")
+      // Build concise sub-address (e.g. "Mangadu, Chennai" or "Poonamallee, India")
       const subParts: string[] = [];
       const placeLower = placeName.toLowerCase();
 
-      const district = revProps?.suburb || revProps?.district;
-      const city = revProps?.city;
-      const country = revProps?.country || revProps?.state;
-
-      if (district && !placeLower.includes(district.toLowerCase())) {
-        subParts.push(district);
-      } else if (city && !placeLower.includes(city.toLowerCase())) {
+      if (suburb && !placeLower.includes(suburb.toLowerCase())) {
+        subParts.push(suburb);
+      }
+      if (city && !placeLower.includes(city.toLowerCase())) {
         subParts.push(city);
       }
-
-      if (country && !placeLower.includes(country.toLowerCase())) {
+      if (country && !placeLower.includes(country.toLowerCase()) && subParts.length < 2) {
         subParts.push(country);
       }
 
       const subAddress = subParts.slice(0, 2).join(', ') || city || country || '';
-      const formattedAddress = revProps?.formatted || [placeName, subAddress].filter(Boolean).join(', ');
+
+      // Build full, clean structured address without distant landmark names
+      const addressParts: string[] = [];
+      if (verifiedBuildingName) {
+        addressParts.push(verifiedBuildingName);
+      }
+      if (streetAddress && !addressParts.includes(streetAddress)) {
+        addressParts.push(streetAddress);
+      }
+      if (suburb && !addressParts.includes(suburb)) {
+        addressParts.push(suburb);
+      }
+      if (city && !addressParts.includes(city)) {
+        if (postcode) {
+          addressParts.push(`${city} - ${postcode}`);
+        } else {
+          addressParts.push(city);
+        }
+      }
+      if (state && !addressParts.includes(state)) {
+        addressParts.push(state);
+      }
+      if (country && !addressParts.includes(country)) {
+        addressParts.push(country);
+      }
+
+      const formattedAddress =
+        addressParts.length > 0
+          ? addressParts.join(', ')
+          : revProps?.formatted || [placeName, subAddress].filter(Boolean).join(', ');
 
       return {
         placeName,
