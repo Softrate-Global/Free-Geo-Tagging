@@ -1,6 +1,6 @@
 import { Linking, Platform } from 'react-native';
 import * as Location from 'expo-location';
-import * as MediaLibrary from 'expo-media-library';
+import * as MediaLibrary from 'expo-media-library/legacy';
 import { Camera } from 'expo-camera';
 
 export interface AppPermissionStatus {
@@ -18,7 +18,7 @@ export class PermissionService {
     const [cameraStatus, locationStatus, mediaStatus, locationServices] = await Promise.all([
       Camera.getCameraPermissionsAsync().catch(() => ({ granted: false })),
       Location.getForegroundPermissionsAsync().catch(() => ({ granted: false })),
-      MediaLibrary.getPermissionsAsync().catch(() => ({ granted: false })),
+      MediaLibrary.getPermissionsAsync(false, ['photo']).catch(() => ({ granted: false })),
       Location.hasServicesEnabledAsync().catch(() => false),
     ]);
 
@@ -59,7 +59,7 @@ export class PermissionService {
    */
   static async requestMediaLibrary(): Promise<boolean> {
     try {
-      const res = await MediaLibrary.requestPermissionsAsync(true); // write-only / granular access
+      const res = await MediaLibrary.requestPermissionsAsync(false, ['photo']);
       return res.granted;
     } catch {
       return false;

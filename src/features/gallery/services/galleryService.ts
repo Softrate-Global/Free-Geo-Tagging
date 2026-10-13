@@ -1,4 +1,4 @@
-import * as MediaLibrary from 'expo-media-library';
+import * as MediaLibrary from 'expo-media-library/legacy';
 import * as FileSystem from 'expo-file-system';
 import { PhotoMetadata } from '../../../shared/types/photoTypes';
 import { APP_CONSTANTS } from '../../../core/constants/appConstants';
@@ -11,12 +11,19 @@ export class GalleryService {
   static async saveToPublicGallery(
     tempImageUri: string
   ): Promise<{ assetId: string; publicUri: string }> {
-    const hasPermission = await MediaLibrary.getPermissionsAsync();
-    if (!hasPermission.granted) {
-      const requested = await MediaLibrary.requestPermissionsAsync(true);
-      if (!requested.granted) {
-        throw new Error('MEDIA_LIBRARY_PERMISSION_DENIED');
+    try {
+      const hasPermission = await MediaLibrary.getPermissionsAsync(false, ['photo']);
+      if (!hasPermission.granted) {
+        const requested = await MediaLibrary.requestPermissionsAsync(false, ['photo']);
+        if (!requested.granted) {
+          throw new Error('MEDIA_LIBRARY_PERMISSION_DENIED');
+        }
       }
+    } catch (permErr: any) {
+      if (permErr?.message === 'MEDIA_LIBRARY_PERMISSION_DENIED') {
+        throw permErr;
+      }
+      console.warn('Media permission check notice:', permErr?.message);
     }
 
     // Create asset in Android MediaStore
