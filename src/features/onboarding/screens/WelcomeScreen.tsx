@@ -4,7 +4,6 @@ import {
   Text,
   StyleSheet,
   TouchableOpacity,
-  useWindowDimensions,
   ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -18,7 +17,6 @@ interface WelcomeScreenProps {
 }
 
 export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ navigation }) => {
-  const { width } = useWindowDimensions();
   const [isStarting, setIsStarting] = useState(false);
 
   const handleGetStarted = async () => {
@@ -44,7 +42,7 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ navigation }) => {
 
   return (
     <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
-      {/* ──────── TOP DECORATIVE & ILLUSTRATION SECTION ──────── */}
+      {/* ──────── TOP DECORATIVE & SKELETON CAMERA SECTION ──────── */}
       <View style={styles.illustrationArea}>
         {/* Floating Festive Confetti Shapes matching reference */}
         {/* 1. Top Left Pink Squiggle */}
@@ -82,18 +80,18 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ navigation }) => {
           <View style={styles.slashPurple} />
         </View>
 
-        {/* 8. Inside Blob Purple Triangle */}
-        <View style={[styles.floatingItem, styles.posInsidePurpleTriangle]}>
+        {/* 8. Top Near-Camera Purple Triangle */}
+        <View style={[styles.floatingItem, styles.posNearPurpleTriangle]}>
           <View style={styles.trianglePurple} />
         </View>
 
-        {/* 9. Inside Blob Yellow Ring */}
-        <View style={[styles.floatingItem, styles.posInsideYellowRing]}>
+        {/* 9. Lower Near-Camera Yellow Ring */}
+        <View style={[styles.floatingItem, styles.posNearYellowRing]}>
           <View style={styles.ringYellow} />
         </View>
 
-        {/* 10. Inside Blob Cyan Squiggle */}
-        <View style={[styles.floatingItem, styles.posInsideCyanSquiggle]}>
+        {/* 10. Right Near-Camera Cyan Squiggle */}
+        <View style={[styles.floatingItem, styles.posNearCyanSquiggle]}>
           <Text style={[styles.squiggleText, { color: '#22D3EE' }]}>~</Text>
         </View>
 
@@ -102,28 +100,23 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ navigation }) => {
           <View style={styles.triangleSoftPurple} />
         </View>
 
-        {/* ──────── CENTER BLACK ORGANIC BLOB (ICON BACKGROUND) ──────── */}
-        <View style={styles.iconBlobBackground}>
-          {/* Inner Accent Halo */}
-          <View style={styles.innerHalo}>
-            {/* ──────── BLACK CAMERA ICON WITH CRISP CONTRAST ──────── */}
-            <View style={styles.cameraIconContainer}>
-              {/* Top Shutter Button */}
-              <View style={styles.cameraShutterBump} />
+        {/* ──────── BLACK SKELETON / OUTLINE CAMERA ICON (NO BACKGROUND BLOB) ──────── */}
+        <View style={styles.skeletonCameraWrapper}>
+          {/* Top Shutter Tab */}
+          <View style={styles.shutterTab} />
 
-              {/* Main Camera Body (Deep Black) */}
-              <View style={styles.cameraBody}>
-                {/* Top Right Flash Window */}
-                <View style={styles.cameraFlash} />
+          {/* Camera Skeleton Body (Pure Transparent with Black Stroke) */}
+          <View style={styles.skeletonCameraBody}>
+            {/* Top Right Flash Indicator */}
+            <View style={styles.flashWindow} />
 
-                {/* Concentric Center Camera Lens */}
-                <View style={styles.cameraLensOuter}>
-                  <View style={styles.cameraLensMid}>
-                    <View style={styles.cameraLensCenter}>
-                      {/* Lens Glass Reflection Dot */}
-                      <View style={styles.cameraLensReflection} />
-                    </View>
-                  </View>
+            {/* Outer Lens Ring */}
+            <View style={styles.lensRingOuter}>
+              {/* Inner Concentric Lens Ring */}
+              <View style={styles.lensRingInner}>
+                {/* Center Pupil with Reflection */}
+                <View style={styles.lensPupil}>
+                  <View style={styles.lensReflection} />
                 </View>
               </View>
             </View>
@@ -133,23 +126,16 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ navigation }) => {
 
       {/* ──────── MIDDLE CONTENT SECTION ──────── */}
       <View style={styles.contentArea}>
-        {/* Primary Headline */}
-        <Text style={styles.headlineText}>Welcome To Camshare</Text>
+        {/* Primary Headline with Current App Name */}
+        <Text style={styles.headlineText}>Welcome To Free Geo Tagging</Text>
 
-        {/* Supporting Description */}
+        {/* Supporting Description with Current App Name */}
         <Text style={styles.descriptionText}>
-          Please turn on your GPS so that we can accurately geotag your photographs with your exact building, company, and location details.
+          Please turn on your GPS so that Free Geo Tagging can accurately geotag your photographs with your exact building, company, and location details.
         </Text>
-
-        {/* Pagination Indicator Dots */}
-        <View style={styles.paginationRow}>
-          <View style={styles.dotInactive} />
-          <View style={styles.dotActive} />
-          <View style={styles.dotInactive} />
-        </View>
       </View>
 
-      {/* ──────── BOTTOM BLACK BUTTON SECTION ──────── */}
+      {/* ──────── BOTTOM SOLID BLACK BUTTON SECTION ──────── */}
       <View style={styles.bottomArea}>
         <TouchableOpacity
           activeOpacity={0.85}
@@ -175,109 +161,81 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   illustrationArea: {
-    flex: 1.25,
+    flex: 1.3,
     alignItems: 'center',
     justifyContent: 'center',
     position: 'relative',
-    marginTop: 10,
+    marginTop: 20,
   },
 
-  /* ──────── Center Icon Background Blob (Solid Black) ──────── */
-  iconBlobBackground: {
-    width: 220,
-    height: 195,
+  /* ──────── Skeleton / Line-Art Camera Icon (No Background Blob) ──────── */
+  skeletonCameraWrapper: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  shutterTab: {
+    width: 26,
+    height: 7,
     backgroundColor: '#000000',
-    borderTopLeftRadius: 110,
-    borderTopRightRadius: 95,
-    borderBottomLeftRadius: 105,
-    borderBottomRightRadius: 115,
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 12 },
-    shadowOpacity: 0.35,
-    shadowRadius: 20,
-    elevation: 10,
-  },
-  innerHalo: {
-    width: 200,
-    height: 175,
-    borderRadius: 90,
-    backgroundColor: '#0A0A0A',
-    borderColor: 'rgba(255, 255, 255, 0.12)',
-    borderWidth: 1.5,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-
-  /* ──────── Black Camera Icon Styling ──────── */
-  cameraIconContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  cameraShutterBump: {
-    width: 20,
-    height: 5,
-    backgroundColor: '#FFFFFF',
-    borderTopLeftRadius: 3,
-    borderTopRightRadius: 3,
-    marginRight: 40,
+    borderTopLeftRadius: 4,
+    borderTopRightRadius: 4,
+    marginRight: 52,
     marginBottom: -1,
   },
-  cameraBody: {
-    width: 106,
-    height: 72,
-    backgroundColor: '#000000',
-    borderColor: '#FFFFFF',
-    borderWidth: 2.8,
-    borderRadius: 16,
+  skeletonCameraBody: {
+    width: 130,
+    height: 88,
+    backgroundColor: 'transparent',
+    borderColor: '#000000',
+    borderWidth: 3.5,
+    borderRadius: 22,
     alignItems: 'center',
     justifyContent: 'center',
     position: 'relative',
   },
-  cameraFlash: {
+  flashWindow: {
     position: 'absolute',
-    top: 9,
-    right: 11,
-    width: 9,
-    height: 9,
-    borderRadius: 4.5,
-    backgroundColor: '#FFFFFF',
+    top: 12,
+    right: 14,
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: '#000000',
   },
-  cameraLensOuter: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    borderWidth: 2.5,
-    borderColor: '#FFFFFF',
-    backgroundColor: '#161616',
+  lensRingOuter: {
+    width: 58,
+    height: 58,
+    borderRadius: 29,
+    borderWidth: 3.5,
+    borderColor: '#000000',
+    backgroundColor: 'transparent',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  cameraLensMid: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: '#262626',
-    borderWidth: 1.5,
-    borderColor: '#525252',
+  lensRingInner: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    borderWidth: 2.2,
+    borderColor: '#000000',
+    backgroundColor: 'transparent',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  cameraLensCenter: {
+  lensPupil: {
     width: 20,
     height: 20,
     borderRadius: 10,
     backgroundColor: '#000000',
     position: 'relative',
   },
-  cameraLensReflection: {
+  lensReflection: {
     position: 'absolute',
     top: 3,
-    right: 4,
-    width: 5,
-    height: 5,
-    borderRadius: 2.5,
+    right: 3,
+    width: 4,
+    height: 4,
+    borderRadius: 2,
     backgroundColor: '#FFFFFF',
   },
 
@@ -292,12 +250,12 @@ const styles = StyleSheet.create({
     lineHeight: 28,
   },
   posTopLeftSquiggle: {
-    top: 35,
+    top: 30,
     left: 45,
     transform: [{ rotate: '25deg' }],
   },
   posTopCenterTriangle: {
-    top: 85,
+    top: 65,
     left: '38%',
   },
   triangleYellow: {
@@ -314,7 +272,7 @@ const styles = StyleSheet.create({
     transform: [{ rotate: '45deg' }],
   },
   posTopRightDiamond: {
-    top: 30,
+    top: 25,
     right: 50,
   },
   diamondGreen: {
@@ -326,12 +284,12 @@ const styles = StyleSheet.create({
     transform: [{ rotate: '45deg' }],
   },
   posUpperRightSquiggle: {
-    top: 130,
-    right: 70,
+    top: 105,
+    right: 60,
     transform: [{ rotate: '-15deg' }],
   },
   posMidLeftSquare: {
-    top: 200,
+    top: 160,
     left: 40,
   },
   squareCyan: {
@@ -343,7 +301,7 @@ const styles = StyleSheet.create({
     transform: [{ rotate: '20deg' }],
   },
   posLowerLeftDot: {
-    bottom: 50,
+    bottom: 35,
     left: 48,
   },
   dotGreen: {
@@ -353,8 +311,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#22C55E',
   },
   posCenterLeftSlash: {
-    top: 175,
-    left: 95,
+    top: 135,
+    left: 85,
   },
   slashPurple: {
     width: 38,
@@ -363,9 +321,9 @@ const styles = StyleSheet.create({
     transform: [{ rotate: '-35deg' }],
     borderRadius: 1,
   },
-  posInsidePurpleTriangle: {
-    top: 145,
-    left: 145,
+  posNearPurpleTriangle: {
+    top: 110,
+    left: '34%',
   },
   trianglePurple: {
     width: 0,
@@ -378,9 +336,9 @@ const styles = StyleSheet.create({
     borderBottomColor: '#A855F7',
     transform: [{ rotate: '70deg' }],
   },
-  posInsideYellowRing: {
-    bottom: 95,
-    left: 155,
+  posNearYellowRing: {
+    bottom: 50,
+    left: '39%',
   },
   ringYellow: {
     width: 11,
@@ -389,13 +347,13 @@ const styles = StyleSheet.create({
     borderColor: '#FBBF24',
     borderWidth: 2,
   },
-  posInsideCyanSquiggle: {
-    bottom: 100,
-    right: 90,
+  posNearCyanSquiggle: {
+    bottom: 65,
+    right: 75,
     transform: [{ rotate: '15deg' }],
   },
   posLowerRightTriangle: {
-    bottom: 60,
+    bottom: 45,
     right: 45,
   },
   triangleSoftPurple: {
@@ -413,11 +371,11 @@ const styles = StyleSheet.create({
   /* ──────── Middle Content Section ──────── */
   contentArea: {
     alignItems: 'center',
-    paddingHorizontal: 32,
-    marginBottom: 20,
+    paddingHorizontal: 28,
+    marginBottom: 28,
   },
   headlineText: {
-    fontSize: 25,
+    fontSize: 24,
     fontWeight: '800',
     color: '#0F172A',
     textAlign: 'center',
@@ -430,32 +388,13 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: 22.5,
     letterSpacing: 0.1,
-    marginBottom: 24,
-    paddingHorizontal: 8,
-  },
-  paginationRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-  },
-  dotActive: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: '#000000',
-  },
-  dotInactive: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: '#CBD5E1',
+    paddingHorizontal: 4,
   },
 
-  /* ──────── Bottom Black Button Section ──────── */
+  /* ──────── Bottom Solid Black Button Section ──────── */
   bottomArea: {
     paddingHorizontal: 24,
-    paddingBottom: 20,
+    paddingBottom: 24,
     width: '100%',
   },
   getStartedButton: {
