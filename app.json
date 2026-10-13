@@ -1,25 +1,66 @@
 {
   "expo": {
-    "name": "Cam-Locator",
-    "slug": "Cam-Locator",
+    "name": "Free Geo Tagging",
+    "slug": "free-geo-tagging",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "userInterfaceStyle": "light",
+    "userInterfaceStyle": "dark",
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSCameraUsageDescription": "Allow Free Geo Tagging to access your camera to take geotagged photos.",
+        "NSLocationWhenInUseUsageDescription": "Allow Free Geo Tagging to access your location to embed accurate GPS coordinates into photos.",
+        "NSPhotoLibraryUsageDescription": "Allow Free Geo Tagging to save photos to your photo library.",
+        "NSPhotoLibraryAddUsageDescription": "Allow Free Geo Tagging to save geotagged photos to your photo library."
+      }
     },
     "android": {
+      "package": "com.freegeotagging.offline",
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
+        "backgroundColor": "#000000",
         "foregroundImage": "./assets/android-icon-foreground.png",
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
+      "permissions": [
+        "CAMERA",
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION",
+        "READ_MEDIA_IMAGES",
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE"
+      ],
       "predictiveBackGestureEnabled": false
     },
-    "web": {
-      "favicon": "./assets/favicon.png"
-    }
+    "plugins": [
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#000000",
+          "image": "./assets/icon.png",
+          "imageWidth": 120
+        }
+      ],
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Allow Free Geo Tagging to access your camera to take geotagged photos."
+        }
+      ],
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "Allow Free Geo Tagging to access your location."
+        }
+      ],
+      [
+        "expo-media-library",
+        {
+          "photosPermission": "Allow Free Geo Tagging to save photos to your gallery.",
+          "savePhotosPermission": "Allow Free Geo Tagging to save photos to your gallery."
+        }
+      ]
+    ]
   }
 }
