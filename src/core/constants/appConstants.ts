@@ -25,5 +25,5 @@ export const APP_CONSTANTS = {
 
   // Geoapify API Key (Free tier: 3,000 requests/day, no credit card required)
   // Obtain free key from: https://www.geoapify.com/
-  GEOAPIFY_API_KEY: '',
+  GEOAPIFY_API_KEY: '535efc39b8c3452aa07c1819d666f3bb',
 } as const;
