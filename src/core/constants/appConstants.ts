@@ -22,4 +22,8 @@ export const APP_CONSTANTS = {
 
   // Storage
   STORAGE_PREFIX: '@gps_cam_',
+
+  // Geoapify API Key (Free tier: 3,000 requests/day, no credit card required)
+  // Obtain free key from: https://www.geoapify.com/
+  GEOAPIFY_API_KEY: '',
 } as const;

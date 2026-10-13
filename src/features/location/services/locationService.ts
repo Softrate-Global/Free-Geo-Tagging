@@ -1,6 +1,7 @@
 import * as Location from 'expo-location';
 import { LocationData, GPSStatus } from '../../../shared/types/photoTypes';
 import { APP_CONSTANTS } from '../../../core/constants/appConstants';
+import { GeoapifyService } from './geoapifyService';
 
 export class LocationService {
   /**
@@ -97,6 +98,15 @@ export class LocationService {
     latitude: number,
     longitude: number
   ): Promise<{ placeName: string; subAddress: string; formattedAddress: string } | null> {
+    // 1. First attempt Geoapify POI & Places resolution
+    try {
+      const geoapifyResult = await GeoapifyService.resolveLocation(latitude, longitude);
+      if (geoapifyResult && geoapifyResult.placeName) {
+        return geoapifyResult;
+      }
+    } catch {}
+
+    // 2. Native Android Geocoder fallback (offline / zero key required)
     try {
       const addresses = await Location.reverseGeocodeAsync({ latitude, longitude });
       if (!addresses || addresses.length === 0) return null;
