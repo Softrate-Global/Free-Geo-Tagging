@@ -46,104 +46,97 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ navigation }) => {
       {/* Dark status bar text/icons (time, battery, wifi) visible on white background */}
       <StatusBar style="dark" />
 
-      {/* ──────── TOP DECORATIVE & SKELETON CAMERA SECTION ──────── */}
-      <View style={styles.illustrationArea}>
-        {/* Spacious, balanced floating festive party papers */}
-        {/* 1. Top Left Pink Squiggle */}
-        <View style={[styles.floatingItem, styles.posTopLeftSquiggle]}>
-          <Text style={[styles.squiggleText, { color: '#F472B6' }]}>~</Text>
-        </View>
+      {/* ──────── UNIFIED CENTER GROUP (ILLUSTRATION + TEXT) ──────── */}
+      <View style={styles.centerGroup}>
+        {/* Compact, tightly-framed illustration box */}
+        <View style={styles.illustrationBox}>
+          {/* Confetti pieces closely framing the camera */}
+          {/* 1. Top Left Pink Squiggle */}
+          <View style={[styles.floatingItem, styles.posTopLeftSquiggle]}>
+            <Text style={[styles.squiggleText, { color: '#F472B6' }]}>~</Text>
+          </View>
 
-        {/* 2. Top Center Yellow Hollow Triangle */}
-        <View style={[styles.floatingItem, styles.posTopCenterTriangle]}>
-          <View style={styles.triangleYellow} />
-        </View>
+          {/* 2. Top Center Yellow Hollow Triangle */}
+          <View style={[styles.floatingItem, styles.posTopCenterTriangle]}>
+            <View style={styles.triangleYellow} />
+          </View>
 
-        {/* 3. Top Right Green Hollow Diamond */}
-        <View style={[styles.floatingItem, styles.posTopRightDiamond]}>
-          <View style={styles.diamondGreen} />
-        </View>
+          {/* 3. Top Right Green Hollow Diamond */}
+          <View style={[styles.floatingItem, styles.posTopRightDiamond]}>
+            <View style={styles.diamondGreen} />
+          </View>
 
-        {/* 4. Upper Left Purple Slash */}
-        <View style={[styles.floatingItem, styles.posUpperLeftSlash]}>
-          <View style={styles.slashPurple} />
-        </View>
+          {/* 4. Mid Left Purple Slash */}
+          <View style={[styles.floatingItem, styles.posMidLeftSlash]}>
+            <View style={styles.slashPurple} />
+          </View>
 
-        {/* 5. Upper Right Cyan Squiggle */}
-        <View style={[styles.floatingItem, styles.posUpperRightSquiggle]}>
-          <Text style={[styles.squiggleText, { color: '#06B6D4' }]}>~</Text>
-        </View>
+          {/* 5. Mid Right Cyan Squiggle */}
+          <View style={[styles.floatingItem, styles.posMidRightSquiggle]}>
+            <Text style={[styles.squiggleText, { color: '#06B6D4' }]}>~</Text>
+          </View>
 
-        {/* 6. Mid Left Cyan Hollow Square */}
-        <View style={[styles.floatingItem, styles.posMidLeftSquare]}>
-          <View style={styles.squareCyan} />
-        </View>
+          {/* 6. Lower Left Cyan Hollow Square */}
+          <View style={[styles.floatingItem, styles.posLowerLeftSquare]}>
+            <View style={styles.squareCyan} />
+          </View>
 
-        {/* 7. Mid Right Purple Triangle */}
-        <View style={[styles.floatingItem, styles.posMidRightTriangle]}>
-          <View style={styles.trianglePurple} />
-        </View>
+          {/* 7. Lower Center Yellow Ring */}
+          <View style={[styles.floatingItem, styles.posLowerCenterRing]}>
+            <View style={styles.ringYellow} />
+          </View>
 
-        {/* 8. Lower Left Green Dot */}
-        <View style={[styles.floatingItem, styles.posLowerLeftDot]}>
-          <View style={styles.dotGreen} />
-        </View>
+          {/* 8. Lower Right Green Dot */}
+          <View style={[styles.floatingItem, styles.posLowerRightDot]}>
+            <View style={styles.dotGreen} />
+          </View>
 
-        {/* 9. Lower Center Yellow Ring */}
-        <View style={[styles.floatingItem, styles.posLowerCenterRing]}>
-          <View style={styles.ringYellow} />
-        </View>
+          {/* 9. Bottom Right Purple Triangle */}
+          <View style={[styles.floatingItem, styles.posBottomRightTriangle]}>
+            <View style={styles.triangleSoftPurple} />
+          </View>
 
-        {/* 10. Lower Right Cyan Squiggle */}
-        <View style={[styles.floatingItem, styles.posLowerRightSquiggle]}>
-          <Text style={[styles.squiggleText, { color: '#22D3EE' }]}>~</Text>
-        </View>
+          {/* ──────── BLACK SKELETON CAMERA ICON ──────── */}
+          <View style={styles.skeletonCameraWrapper}>
+            {/* Top Shutter Tab */}
+            <View style={styles.shutterTab} />
 
-        {/* 11. Bottom Right Soft Purple Triangle */}
-        <View style={[styles.floatingItem, styles.posBottomRightTriangle]}>
-          <View style={styles.triangleSoftPurple} />
-        </View>
+            {/* Camera Skeleton Body (Pure Transparent with Black Stroke) */}
+            <View style={styles.skeletonCameraBody}>
+              {/* Top Right Flash Indicator */}
+              <View style={styles.flashWindow} />
 
-        {/* ──────── BLACK SKELETON / OUTLINE CAMERA ICON (NO BACKGROUND BLOB) ──────── */}
-        <View style={styles.skeletonCameraWrapper}>
-          {/* Top Shutter Tab */}
-          <View style={styles.shutterTab} />
-
-          {/* Camera Skeleton Body (Pure Transparent with Black Stroke) */}
-          <View style={styles.skeletonCameraBody}>
-            {/* Top Right Flash Indicator */}
-            <View style={styles.flashWindow} />
-
-            {/* Outer Lens Ring */}
-            <View style={styles.lensRingOuter}>
-              {/* Inner Concentric Lens Ring */}
-              <View style={styles.lensRingInner}>
-                {/* Center Pupil with Reflection */}
-                <View style={styles.lensPupil}>
-                  <View style={styles.lensReflection} />
+              {/* Outer Lens Ring */}
+              <View style={styles.lensRingOuter}>
+                {/* Inner Concentric Lens Ring */}
+                <View style={styles.lensRingInner}>
+                  {/* Center Pupil with Reflection */}
+                  <View style={styles.lensPupil}>
+                    <View style={styles.lensReflection} />
+                  </View>
                 </View>
               </View>
             </View>
           </View>
         </View>
-      </View>
 
-      {/* ──────── MIDDLE CONTENT SECTION ──────── */}
-      <View style={styles.contentArea}>
-        {/* Single-line Headline with Current App Name */}
-        <Text
-          style={styles.headlineText}
-          numberOfLines={1}
-          adjustsFontSizeToFit
-          minimumFontScale={0.85}
-        >
-          Welcome to Free Geo Tagging
-        </Text>
+        {/* ──────── CONTENT SECTION (CLOSE TO ILLUSTRATION) ──────── */}
+        <View style={styles.contentArea}>
+          {/* Single-line Headline with Current App Name */}
+          <Text
+            style={styles.headlineText}
+            numberOfLines={1}
+            adjustsFontSizeToFit
+            minimumFontScale={0.85}
+          >
+            Welcome to Free Geo Tagging
+          </Text>
 
-        {/* Short, punchy 2-line description */}
-        <Text style={styles.descriptionText} numberOfLines={2}>
-          Turn on GPS so Free Geo Tagging can accurately geotag your photos with company and address details.
-        </Text>
+          {/* Short, complete 2-line description without truncation */}
+          <Text style={styles.descriptionText}>
+            Turn on GPS so Free Geo Tagging can accurately geotag your photos with company and address details.
+          </Text>
+        </View>
       </View>
 
       {/* ──────── BOTTOM SOLID BLACK BUTTON SECTION ──────── */}
@@ -171,103 +164,114 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     justifyContent: 'space-between',
   },
-  illustrationArea: {
-    flex: 1.4,
+
+  /* ──────── Center Group: Keeps Illustration & Text Harmoniously Unified ──────── */
+  centerGroup: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 20,
+    marginTop: -10,
+  },
+
+  /* ──────── Compact Hero Illustration Box Eliminates Giant White Canyon ──────── */
+  illustrationBox: {
+    width: 310,
+    height: 230,
     alignItems: 'center',
     justifyContent: 'center',
     position: 'relative',
-    marginTop: 10,
   },
 
-  /* ──────── Skeleton / Line-Art Camera Icon (No Background Blob) ──────── */
+  /* ──────── Black Skeleton / Line-Art Camera Icon ──────── */
   skeletonCameraWrapper: {
     alignItems: 'center',
     justifyContent: 'center',
     zIndex: 1,
   },
   shutterTab: {
-    width: 26,
-    height: 7,
+    width: 32,
+    height: 8,
     backgroundColor: '#000000',
-    borderTopLeftRadius: 4,
-    borderTopRightRadius: 4,
-    marginRight: 52,
+    borderTopLeftRadius: 5,
+    borderTopRightRadius: 5,
+    marginRight: 64,
     marginBottom: -1,
   },
   skeletonCameraBody: {
-    width: 136,
-    height: 92,
+    width: 168,
+    height: 114,
     backgroundColor: 'transparent',
     borderColor: '#000000',
-    borderWidth: 3.5,
-    borderRadius: 24,
+    borderWidth: 3.8,
+    borderRadius: 28,
     alignItems: 'center',
     justifyContent: 'center',
     position: 'relative',
   },
   flashWindow: {
     position: 'absolute',
-    top: 13,
-    right: 15,
-    width: 10,
-    height: 10,
-    borderRadius: 5,
+    top: 15,
+    right: 18,
+    width: 12,
+    height: 12,
+    borderRadius: 6,
     backgroundColor: '#000000',
   },
   lensRingOuter: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    borderWidth: 3.5,
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    borderWidth: 3.8,
     borderColor: '#000000',
     backgroundColor: 'transparent',
     alignItems: 'center',
     justifyContent: 'center',
   },
   lensRingInner: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
-    borderWidth: 2.2,
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    borderWidth: 2.5,
     borderColor: '#000000',
     backgroundColor: 'transparent',
     alignItems: 'center',
     justifyContent: 'center',
   },
   lensPupil: {
-    width: 22,
-    height: 22,
-    borderRadius: 11,
+    width: 26,
+    height: 26,
+    borderRadius: 13,
     backgroundColor: '#000000',
     position: 'relative',
   },
   lensReflection: {
     position: 'absolute',
-    top: 3,
-    right: 3,
-    width: 4.5,
-    height: 4.5,
-    borderRadius: 2.25,
+    top: 4,
+    right: 4,
+    width: 5,
+    height: 5,
+    borderRadius: 2.5,
     backgroundColor: '#FFFFFF',
   },
 
-  /* ──────── Spacious & Balanced Festive Floating Elements ──────── */
+  /* ──────── Closely & Elegantly Framed Confetti Elements ──────── */
   floatingItem: {
     position: 'absolute',
     zIndex: 2,
   },
   squiggleText: {
-    fontSize: 28,
+    fontSize: 26,
     fontWeight: '800',
-    lineHeight: 28,
+    lineHeight: 26,
   },
   posTopLeftSquiggle: {
-    top: 25,
-    left: 42,
+    top: 10,
+    left: 20,
     transform: [{ rotate: '25deg' }],
   },
   posTopCenterTriangle: {
-    top: 15,
+    top: 6,
     left: '48%',
   },
   triangleYellow: {
@@ -284,73 +288,48 @@ const styles = StyleSheet.create({
     transform: [{ rotate: '45deg' }],
   },
   posTopRightDiamond: {
-    top: 22,
-    right: 42,
+    top: 12,
+    right: 22,
   },
   diamondGreen: {
-    width: 14,
-    height: 14,
+    width: 13,
+    height: 13,
     borderColor: '#86EFAC',
     borderWidth: 2,
     borderRadius: 3,
     transform: [{ rotate: '45deg' }],
   },
-  posUpperLeftSlash: {
-    top: 90,
-    left: 35,
+  posMidLeftSlash: {
+    top: 92,
+    left: 10,
   },
   slashPurple: {
-    width: 36,
+    width: 34,
     height: 2.5,
     backgroundColor: '#818CF8',
     transform: [{ rotate: '-35deg' }],
     borderRadius: 1,
   },
-  posUpperRightSquiggle: {
-    top: 85,
-    right: 36,
+  posMidRightSquiggle: {
+    top: 88,
+    right: 14,
     transform: [{ rotate: '-15deg' }],
   },
-  posMidLeftSquare: {
-    top: 165,
-    left: 28,
+  posLowerLeftSquare: {
+    bottom: 18,
+    left: 18,
   },
   squareCyan: {
-    width: 14,
-    height: 14,
+    width: 13,
+    height: 13,
     borderColor: '#22D3EE',
     borderWidth: 2,
     borderRadius: 3.5,
     transform: [{ rotate: '20deg' }],
   },
-  posMidRightTriangle: {
-    top: 155,
-    right: 30,
-  },
-  trianglePurple: {
-    width: 0,
-    height: 0,
-    borderLeftWidth: 6,
-    borderRightWidth: 6,
-    borderBottomWidth: 11,
-    borderLeftColor: 'transparent',
-    borderRightColor: 'transparent',
-    borderBottomColor: '#A855F7',
-    transform: [{ rotate: '70deg' }],
-  },
-  posLowerLeftDot: {
-    bottom: 25,
-    left: 55,
-  },
-  dotGreen: {
-    width: 7,
-    height: 7,
-    borderRadius: 3.5,
-    backgroundColor: '#22C55E',
-  },
   posLowerCenterRing: {
-    bottom: 18,
-    left: '47%',
+    bottom: 8,
+    left: '48%',
   },
   ringYellow: {
     width: 12,
@@ -359,21 +338,26 @@ const styles = StyleSheet.create({
     borderColor: '#FBBF24',
     borderWidth: 2,
   },
-  posLowerRightSquiggle: {
-    bottom: 25,
-    right: 55,
-    transform: [{ rotate: '15deg' }],
+  posLowerRightDot: {
+    bottom: 20,
+    right: 22,
+  },
+  dotGreen: {
+    width: 7,
+    height: 7,
+    borderRadius: 3.5,
+    backgroundColor: '#22C55E',
   },
   posBottomRightTriangle: {
-    bottom: 55,
-    right: 25,
+    bottom: 8,
+    right: 68,
   },
   triangleSoftPurple: {
     width: 0,
     height: 0,
-    borderLeftWidth: 7,
-    borderRightWidth: 7,
-    borderBottomWidth: 12,
+    borderLeftWidth: 6,
+    borderRightWidth: 6,
+    borderBottomWidth: 10,
     borderLeftColor: 'transparent',
     borderRightColor: 'transparent',
     borderBottomColor: '#C084FC',
@@ -383,36 +367,37 @@ const styles = StyleSheet.create({
   /* ──────── Middle Content Section ──────── */
   contentArea: {
     alignItems: 'center',
-    paddingHorizontal: 20,
-    marginBottom: 20,
+    paddingHorizontal: 16,
+    marginTop: 26,
+    width: '100%',
   },
   headlineText: {
-    fontSize: 20,
+    fontSize: 22,
     fontWeight: '800',
     color: '#0F172A',
     textAlign: 'center',
     letterSpacing: 0.2,
-    marginBottom: 8,
+    marginBottom: 10,
     width: '100%',
   },
   descriptionText: {
-    fontSize: 13.5,
+    fontSize: 14,
     color: '#64748B',
     textAlign: 'center',
-    lineHeight: 20,
+    lineHeight: 21,
     letterSpacing: 0.1,
-    paddingHorizontal: 16,
+    paddingHorizontal: 10,
   },
 
   /* ──────── Bottom Solid Black Button Section ──────── */
   bottomArea: {
     paddingHorizontal: 24,
-    paddingBottom: 20,
+    paddingBottom: 24,
     width: '100%',
   },
   getStartedButton: {
     width: '100%',
-    height: 54,
+    height: 56,
     backgroundColor: '#000000',
     borderRadius: 16,
     alignItems: 'center',
