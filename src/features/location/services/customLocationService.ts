@@ -13,6 +13,21 @@ export interface SavedLocationEntry {
 }
 
 /**
+ * Built-in known facility presets (fallback when user hasn't explicitly set a custom tag yet).
+ */
+const DEFAULT_PRESET_LOCATIONS: SavedLocationEntry[] = [
+  {
+    id: 'preset_softrate_hq',
+    latitude: 13.028948,
+    longitude: 80.108001,
+    placeName: 'SOFTRATE TECH PARK',
+    subAddress: 'Mangadu, Chennai',
+    formattedAddress: '60A, Velleeswarar Koil Street, Srinivasa Nagar, Mangadu, Chennai - 600122',
+    savedAt: 0,
+  },
+];
+
+/**
  * Calculates distance in meters between two lat/lon coordinates using the Haversine formula.
  */
 export function calculateDistanceMeters(
@@ -52,15 +67,16 @@ export class CustomLocationService {
   }
 
   /**
-   * Finds any saved custom location within a specified radius (default: 120 meters).
+   * Finds any saved custom location or known facility within a specified radius (default: 150 meters).
    * Perfect for detecting when the user is at their office, tech park, apartment, or home.
    */
   static async getSavedLocation(
     latitude: number,
     longitude: number,
-    maxDistanceMeters: number = 120
+    maxDistanceMeters: number = 150
   ): Promise<SavedLocationEntry | null> {
     try {
+      // 1. Check user-defined overrides in storage first
       const all = await this.getAllSavedLocations();
       let closest: SavedLocationEntry | null = null;
       let minDistance = maxDistanceMeters;
@@ -70,6 +86,19 @@ export class CustomLocationService {
         if (dist <= minDistance) {
           minDistance = dist;
           closest = loc;
+        }
+      }
+
+      if (closest) {
+        return closest;
+      }
+
+      // 2. Fallback to known facility presets
+      for (const preset of DEFAULT_PRESET_LOCATIONS) {
+        const dist = calculateDistanceMeters(latitude, longitude, preset.latitude, preset.longitude);
+        if (dist <= minDistance) {
+          minDistance = dist;
+          closest = preset;
         }
       }
 

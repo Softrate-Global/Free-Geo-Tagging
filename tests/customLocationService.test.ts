@@ -69,11 +69,11 @@ describe('CustomLocationService & Distance Calculations', () => {
   });
 
   it('clears saved custom location within radius', async () => {
-    const lat = 13.028948;
-    const lon = 80.108001;
+    const lat = 12.9716;
+    const lon = 77.5946;
 
     await CustomLocationService.saveLocation(lat, lon, {
-      placeName: 'SOFTRATE TECH PARK',
+      placeName: 'BANGALORE TECH HUB',
     });
 
     await CustomLocationService.clearSavedLocation(lat, lon);

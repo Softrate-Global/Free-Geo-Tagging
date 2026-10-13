@@ -217,7 +217,7 @@ export const CameraScreen: React.FC<CameraScreenProps> = ({ navigation }) => {
       // Step 3: Prepare watermark parameters with Google Maps place name
       setProcessingStatus('Resolving location details...');
       let finalLocation = effectiveLocation;
-      if (finalLocation && !finalLocation.placeName) {
+      if (finalLocation && (!finalLocation.placeName || !finalLocation.formattedAddress)) {
         try {
           const geo = await LocationService.reverseGeocode(
             finalLocation.latitude,
@@ -226,9 +226,9 @@ export const CameraScreen: React.FC<CameraScreenProps> = ({ navigation }) => {
           if (geo) {
             finalLocation = {
               ...finalLocation,
-              placeName: geo.placeName,
-              subAddress: geo.subAddress,
-              formattedAddress: geo.formattedAddress,
+              placeName: finalLocation.placeName || geo.placeName,
+              subAddress: finalLocation.subAddress || geo.subAddress,
+              formattedAddress: finalLocation.formattedAddress || geo.formattedAddress,
             };
           }
         } catch {}
