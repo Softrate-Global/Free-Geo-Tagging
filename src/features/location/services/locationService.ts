@@ -88,4 +88,65 @@ export class LocationService {
       }
     );
   }
+
+  /**
+   * Reverse-geocodes coordinates into a readable place name and address
+   * matching Google Maps placemark data.
+   */
+  static async reverseGeocode(
+    latitude: number,
+    longitude: number
+  ): Promise<{ placeName: string; formattedAddress: string } | null> {
+    try {
+      const addresses = await Location.reverseGeocodeAsync({ latitude, longitude });
+      if (!addresses || addresses.length === 0) return null;
+
+      const addr = addresses[0];
+
+      // Formulate prominent place name (e.g., landmark, building, street, or city)
+      const placeName =
+        addr.name ||
+        addr.street ||
+        addr.district ||
+        addr.subregion ||
+        addr.city ||
+        'GPS Location';
+
+      // Assemble structured geographical address
+      const parts: string[] = [];
+
+      if (addr.street && addr.street !== addr.name) {
+        const streetFull = addr.streetNumber ? `${addr.streetNumber} ${addr.street}` : addr.street;
+        parts.push(streetFull);
+      } else if (addr.name && !parts.includes(addr.name)) {
+        parts.push(addr.name);
+      }
+
+      if (addr.district && !parts.includes(addr.district)) {
+        parts.push(addr.district);
+      }
+      if (addr.city && !parts.includes(addr.city)) {
+        parts.push(addr.city);
+      }
+      if (addr.region && !parts.includes(addr.region)) {
+        parts.push(addr.region);
+      }
+      if (addr.postalCode && !parts.includes(addr.postalCode)) {
+        parts.push(addr.postalCode);
+      }
+      if (addr.country && !parts.includes(addr.country)) {
+        parts.push(addr.country);
+      }
+
+      const formattedAddress = parts.join(', ');
+
+      return {
+        placeName,
+        formattedAddress,
+      };
+    } catch (err) {
+      console.warn('Reverse geocoding notice:', err);
+      return null;
+    }
+  }
 }

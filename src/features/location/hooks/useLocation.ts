@@ -35,6 +35,14 @@ export function useLocation() {
       }
 
       const loc = await LocationService.getCurrentLocation();
+      try {
+        const geo = await LocationService.reverseGeocode(loc.latitude, loc.longitude);
+        if (geo) {
+          loc.placeName = geo.placeName;
+          loc.formattedAddress = geo.formattedAddress;
+        }
+      } catch {}
+
       setCurrentLocation(loc);
       const evaluated = LocationService.evaluateAccuracy(loc.accuracy);
       setGpsStatus(evaluated);
@@ -71,9 +79,22 @@ export function useLocation() {
         const sub = await LocationService.watchLocation(
           (loc) => {
             if (mounted) {
-              setCurrentLocation(loc);
+              setCurrentLocation((prev) => ({
+                ...loc,
+                placeName: prev?.placeName,
+                formattedAddress: prev?.formattedAddress,
+              }));
               setGpsStatus(LocationService.evaluateAccuracy(loc.accuracy));
               setErrorMessage(null);
+
+              // Update address in background
+              LocationService.reverseGeocode(loc.latitude, loc.longitude).then((geo) => {
+                if (geo && mounted) {
+                  setCurrentLocation((prev) =>
+                    prev ? { ...prev, placeName: geo.placeName, formattedAddress: geo.formattedAddress } : prev
+                  );
+                }
+              }).catch(() => {});
             }
           },
           () => {

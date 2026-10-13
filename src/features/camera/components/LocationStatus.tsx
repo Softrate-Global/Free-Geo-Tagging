@@ -51,20 +51,35 @@ export const LocationStatus: React.FC<LocationStatusProps> = ({
       </View>
 
       {location && (
-        <View style={styles.dataGrid}>
-          <View style={styles.dataItem}>
-            <Text style={styles.dataLabel}>LAT</Text>
-            <Text style={styles.dataVal}>{formatLatitude(location.latitude, 5)}</Text>
+        <>
+          {location.placeName ? (
+            <View style={styles.placeRow}>
+              <Text style={styles.placeTitle} numberOfLines={1}>
+                {location.placeName.toUpperCase()}
+              </Text>
+              {location.formattedAddress ? (
+                <Text style={styles.placeSub} numberOfLines={1}>
+                  {location.formattedAddress}
+                </Text>
+              ) : null}
+            </View>
+          ) : null}
+
+          <View style={styles.dataGrid}>
+            <View style={styles.dataItem}>
+              <Text style={styles.dataLabel}>LAT</Text>
+              <Text style={styles.dataVal}>{formatLatitude(location.latitude, 5)}</Text>
+            </View>
+            <View style={styles.dataItem}>
+              <Text style={styles.dataLabel}>LON</Text>
+              <Text style={styles.dataVal}>{formatLongitude(location.longitude, 5)}</Text>
+            </View>
+            <View style={styles.dataItem}>
+              <Text style={styles.dataLabel}>ACC</Text>
+              <Text style={styles.dataVal}>{formatAccuracy(location.accuracy)}</Text>
+            </View>
           </View>
-          <View style={styles.dataItem}>
-            <Text style={styles.dataLabel}>LON</Text>
-            <Text style={styles.dataVal}>{formatLongitude(location.longitude, 5)}</Text>
-          </View>
-          <View style={styles.dataItem}>
-            <Text style={styles.dataLabel}>ACC</Text>
-            <Text style={styles.dataVal}>{formatAccuracy(location.accuracy)}</Text>
-          </View>
-        </View>
+        </>
       )}
     </View>
   );
@@ -143,5 +158,24 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 11,
     fontWeight: '600',
+  },
+  placeRow: {
+    marginTop: spacing.xs,
+    paddingTop: spacing.xs,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255, 255, 255, 0.12)',
+  },
+  placeTitle: {
+    ...typography.captionBold,
+    color: '#FFFFFF',
+    fontSize: 11,
+    fontWeight: '700',
+    letterSpacing: 0.8,
+  },
+  placeSub: {
+    ...typography.micro,
+    color: 'rgba(255, 255, 255, 0.7)',
+    fontSize: 9.5,
+    marginTop: 1,
   },
 });

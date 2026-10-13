@@ -13,6 +13,7 @@ import { CameraView, CameraType, FlashMode, useCameraPermissions } from 'expo-ca
 import ViewShot from 'react-native-view-shot';
 
 import { useLocation } from '../../location/hooks/useLocation';
+import { LocationService } from '../../location/services/locationService';
 import { LocationStatus } from '../components/LocationStatus';
 import { CameraControls } from '../components/CameraControls';
 import { FlashButton } from '../components/FlashButton';
@@ -154,10 +155,28 @@ export const CameraScreen: React.FC<CameraScreenProps> = ({ navigation }) => {
       setProcessingStatus('Normalizing orientation...');
       const normalized = await WatermarkService.normalizeImage(rawPhoto.uri);
 
-      // Step 3: Prepare watermark parameters
+      // Step 3: Prepare watermark parameters with Google Maps place name
+      setProcessingStatus('Resolving location details...');
+      let finalLocation = currentLocation;
+      if (finalLocation && !finalLocation.placeName) {
+        try {
+          const geo = await LocationService.reverseGeocode(
+            finalLocation.latitude,
+            finalLocation.longitude
+          );
+          if (geo) {
+            finalLocation = {
+              ...finalLocation,
+              placeName: geo.placeName,
+              formattedAddress: geo.formattedAddress,
+            };
+          }
+        } catch {}
+      }
+
       setProcessingStatus('Compositing GPS watermark...');
       const watermarkData = WatermarkService.prepareWatermarkData(
-        currentLocation,
+        finalLocation,
         captureTimestamp
       );
 
@@ -188,7 +207,7 @@ export const CameraScreen: React.FC<CameraScreenProps> = ({ navigation }) => {
         filename
       );
 
-      // Step 6: Persist photo metadata offline
+      // Step 6: Persist photo metadata offline with resolved place and address
       const photoMetadata: PhotoMetadata = {
         id: `photo_${captureTimestamp}`,
         filename,
@@ -196,7 +215,7 @@ export const CameraScreen: React.FC<CameraScreenProps> = ({ navigation }) => {
         processedUri: publicUri,
         width: rawPhoto.width,
         height: rawPhoto.height,
-        location: currentLocation,
+        location: finalLocation,
         locationStatus: gpsStatus,
         capturedAt: captureTimestamp,
         processedAt: Date.now(),

@@ -57,6 +57,18 @@ export const PhotoMetadataPanel: React.FC<PhotoMetadataPanelProps> = ({
           <Text style={styles.sectionTitle}>GEOGRAPHICAL LOCATION</Text>
           {photo.location ? (
             <>
+              {photo.location.placeName ? (
+                <View style={styles.row}>
+                  <Text style={styles.label}>PLACE</Text>
+                  <Text style={styles.val}>{photo.location.placeName}</Text>
+                </View>
+              ) : null}
+              {photo.location.formattedAddress ? (
+                <View style={styles.row}>
+                  <Text style={styles.label}>ADDRESS</Text>
+                  <Text style={styles.val}>{photo.location.formattedAddress}</Text>
+                </View>
+              ) : null}
               <View style={styles.row}>
                 <Text style={styles.label}>LATITUDE</Text>
                 <Text style={styles.valMono}>{formatLatitude(photo.location.latitude)}</Text>

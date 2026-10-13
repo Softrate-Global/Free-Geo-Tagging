@@ -29,6 +29,23 @@ export const WatermarkTemplate: React.FC<WatermarkTemplateProps> = ({ data, scal
       <View style={styles.divider} />
 
       <View style={styles.content}>
+        {/* Google Maps Location Name & Address */}
+        {(data.placeName || data.formattedAddress) ? (
+          <View style={styles.locationBlock}>
+            {data.placeName ? (
+              <Text style={styles.placeNameText} numberOfLines={1}>
+                {data.placeName.toUpperCase()}
+              </Text>
+            ) : null}
+            {data.formattedAddress ? (
+              <Text style={styles.addressText} numberOfLines={2}>
+                {data.formattedAddress}
+              </Text>
+            ) : null}
+            <View style={styles.subDivider} />
+          </View>
+        ) : null}
+
         {hasCoordinates ? (
           <>
             <View style={styles.dataRow}>
@@ -154,5 +171,22 @@ const styles = StyleSheet.create({
     ...typography.dataMono,
     color: 'rgba(255, 255, 255, 0.85)',
     fontSize: 10,
+  },
+  locationBlock: {
+    marginBottom: 2,
+  },
+  placeNameText: {
+    ...typography.captionBold,
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: '700',
+    letterSpacing: 0.8,
+  },
+  addressText: {
+    ...typography.micro,
+    color: 'rgba(255, 255, 255, 0.75)',
+    fontSize: 9.5,
+    lineHeight: 13,
+    marginTop: 2,
   },
 });

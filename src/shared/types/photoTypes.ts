@@ -14,6 +14,8 @@ export interface LocationData {
   heading: number | null;
   speed: number | null;
   timestamp: number; // ms
+  placeName?: string;
+  formattedAddress?: string;
 }
 
 export interface PhotoMetadata {
