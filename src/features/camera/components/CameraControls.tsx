@@ -41,19 +41,14 @@ export const CameraControls: React.FC<CameraControlsProps> = ({
         if (!isMounted) return;
 
         // Ignore when device is flat on a surface
-        if (Math.abs(x) < 0.25 && Math.abs(y) < 0.25) return;
-
+        // Only rotate when held horizontally in landscape (|x| > |y|)
         let target = 0;
-        if (x > 0.45) {
-          target = -90; // Landscape Right
-        } else if (x < -0.45) {
-          target = 90; // Landscape Left
-        } else if (y > 0.55) {
-          target = 180; // Inverted Portrait
-        } else if (y < -0.3) {
-          target = 0; // Standard Portrait
+        if (Math.abs(x) > Math.abs(y) && Math.abs(x) > 0.45) {
+          // When tilted right (x > 0), rotate -90; when tilted left (x < 0), rotate 90
+          target = x > 0 ? -90 : 90;
         } else {
-          return;
+          // In standard portrait: always 0 (upright), never flip upside down (180)
+          target = 0;
         }
 
         Animated.spring(rotationAnim, {
@@ -139,7 +134,7 @@ export const CameraControls: React.FC<CameraControlsProps> = ({
         />
       </View>
 
-      {/* ──────── Right Section (flex: 1): Camera Flip Button ──────── */}
+      {/* ──────── Right Section (flex: 1): Camera Flip Button + Spacer for Perfect Symmetry ──────── */}
       <View style={styles.sideSlotRight}>
         <TouchableOpacity
           activeOpacity={0.7}
@@ -151,6 +146,9 @@ export const CameraControls: React.FC<CameraControlsProps> = ({
             <Ionicons name="camera-reverse-outline" size={24} color="#FFFFFF" />
           </Animated.View>
         </TouchableOpacity>
+
+        {/* Empty matching spacer to keep Flip equidistant from Shutter as Flash */}
+        <View style={styles.emptySpacer} />
       </View>
     </View>
   );
@@ -171,8 +169,8 @@ const styles = StyleSheet.create({
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'flex-start',
-    gap: 16,
+    justifyContent: 'space-between',
+    paddingRight: 12,
   },
   centerSlot: {
     alignItems: 'center',
@@ -183,7 +181,12 @@ const styles = StyleSheet.create({
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'flex-end',
+    justifyContent: 'space-between',
+    paddingLeft: 12,
+  },
+  emptySpacer: {
+    width: 46,
+    height: 46,
   },
   iconBtn: {
     alignItems: 'center',

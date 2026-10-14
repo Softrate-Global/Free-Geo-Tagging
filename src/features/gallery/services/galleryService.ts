@@ -60,7 +60,7 @@ export class GalleryService {
 
     return {
       assetId,
-      publicUri,
+      publicUri: permanentLocalUri,
     };
   }
 

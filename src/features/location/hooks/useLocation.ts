@@ -60,6 +60,9 @@ export function useLocation() {
     }
   }, []);
 
+  const lastGeocodedCoordsRef = useRef<{ lat: number; lng: number } | null>(null);
+  const isGeocodingRef = useRef(false);
+
   useEffect(() => {
     let mounted = true;
 
@@ -89,19 +92,36 @@ export function useLocation() {
               setGpsStatus(LocationService.evaluateAccuracy(loc.accuracy));
               setErrorMessage(null);
 
-              // Update address in background
-              LocationService.reverseGeocode(loc.latitude, loc.longitude).then((geo) => {
-                if (geo && mounted) {
-                  setCurrentLocation((prev) =>
-                    prev ? {
-                      ...prev,
-                      placeName: geo.placeName,
-                      subAddress: geo.subAddress,
-                      formattedAddress: geo.formattedAddress,
-                    } : prev
-                  );
-                }
-              }).catch(() => {});
+              // Update address only if moved > 25m and not currently fetching
+              const last = lastGeocodedCoordsRef.current;
+              const hasMovedSignificantly =
+                !last ||
+                Math.abs(loc.latitude - last.lat) > 0.0003 ||
+                Math.abs(loc.longitude - last.lng) > 0.0003;
+
+              if (hasMovedSignificantly && !isGeocodingRef.current) {
+                isGeocodingRef.current = true;
+                lastGeocodedCoordsRef.current = { lat: loc.latitude, lng: loc.longitude };
+                LocationService.reverseGeocode(loc.latitude, loc.longitude)
+                  .then((geo) => {
+                    if (geo && mounted) {
+                      setCurrentLocation((prev) =>
+                        prev
+                          ? {
+                              ...prev,
+                              placeName: geo.placeName,
+                              subAddress: geo.subAddress,
+                              formattedAddress: geo.formattedAddress,
+                            }
+                          : prev
+                      );
+                    }
+                  })
+                  .catch(() => {})
+                  .finally(() => {
+                    isGeocodingRef.current = false;
+                  });
+              }
             }
           },
           () => {

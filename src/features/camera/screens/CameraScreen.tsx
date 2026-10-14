@@ -225,22 +225,43 @@ export const CameraScreen: React.FC<CameraScreenProps> = ({ navigation }) => {
     }
     checkPermissions();
 
-    // Load recent photo thumbnail
+    // Load recent photo thumbnail (either from app storage or device gallery)
     async function loadRecentThumbnail() {
-      const photos = await LocalMetadataService.getAllPhotos();
-      if (photos.length > 0) {
-        setLastThumbnailUri(photos[0].processedUri);
+      try {
+        const photos = await LocalMetadataService.getAllPhotos();
+        if (photos.length > 0) {
+          setLastThumbnailUri(photos[0].processedUri);
+          return;
+        }
+
+        // Fallback to most recent photo from device album
+        const MediaLibrary = await import('expo-media-library/legacy');
+        const perm = await MediaLibrary.getPermissionsAsync();
+        if (perm.granted) {
+          const result = await MediaLibrary.getAssetsAsync({
+            first: 1,
+            sortBy: [MediaLibrary.SortBy.creationTime],
+            mediaType: [MediaLibrary.MediaType.photo],
+          });
+          if (result && result.assets && result.assets.length > 0) {
+            setLastThumbnailUri(result.assets[0].uri);
+          }
+        }
+      } catch (err) {
+        console.warn('loadRecentThumbnail error:', err);
       }
     }
     loadRecentThumbnail();
   }, []);
 
+  const refreshLocationRef = useRef(refreshLocation);
+  refreshLocationRef.current = refreshLocation;
+
   // Re-check permissions when returning from device Settings
   useEffect(() => {
     const subscription = AppState.addEventListener('change', (nextAppState) => {
       if (nextAppState === 'active') {
-        requestCameraPermission();
-        refreshLocation();
+        refreshLocationRef.current();
         PermissionService.checkAllPermissions().then((all) => {
           setHasMediaPermission(all.mediaGranted);
         });
@@ -250,7 +271,7 @@ export const CameraScreen: React.FC<CameraScreenProps> = ({ navigation }) => {
     return () => {
       subscription.remove();
     };
-  }, [refreshLocation, requestCameraPermission]);
+  }, []);
 
   const handleRequestAllPermissions = async () => {
     try {
@@ -413,10 +434,8 @@ export const CameraScreen: React.FC<CameraScreenProps> = ({ navigation }) => {
     }
   };
 
-  // Permission Guard: Camera and GPS Location are the critical hardware prerequisites for the live viewfinder
-  const needsPermission =
-    !cameraPermission?.granted ||
-    gpsStatus === 'PERMISSION_DENIED';
+  // Permission Guard: Camera is the prerequisite that requires rendering PermissionRequestView instead of the viewfinder
+  const needsPermission = !cameraPermission?.granted;
 
   if (needsPermission) {
     return (

@@ -281,11 +281,13 @@ export const PhotoPreviewModal: React.FC<PhotoPreviewModalProps> = ({
             style={[styles.canvas, { width: canvasWidth, height: canvasHeight }]}
           >
             {/* Captured Base Photo */}
-            <Image
-              source={{ uri: photoUri }}
-              style={StyleSheet.absoluteFill}
-              resizeMode="cover"
-            />
+            {photoUri ? (
+              <Image
+                source={{ uri: photoUri }}
+                style={[StyleSheet.absoluteFill, { width: canvasWidth, height: canvasHeight }]}
+                resizeMode="cover"
+              />
+            ) : null}
 
             {/* Retro Digital Camera Timestamp Stamp (e.g. "10:18 10.14.26") */}
             {watermarkData?.captureTimestamp ? (

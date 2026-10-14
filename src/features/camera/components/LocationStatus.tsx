@@ -68,20 +68,27 @@ export const LocationStatus: React.FC<LocationStatusProps> = ({
       </View>
 
       {/* Place / Building Name & Full Address */}
-      {location?.placeName ? (
-        <View style={styles.placeRow}>
-          <View style={styles.placeTitleRow}>
-            <Text style={styles.placeTitle} numberOfLines={1}>
-              {location.placeName.toUpperCase()}
-            </Text>
-          </View>
-          {addressText ? (
-            <Text style={styles.placeSub} numberOfLines={2}>
-              {addressText}
-            </Text>
-          ) : null}
+      <View style={styles.placeRow}>
+        <View style={styles.placeTitleRow}>
+          <Text style={styles.placeTitle} numberOfLines={1}>
+            {location?.placeName
+              ? location.placeName.toUpperCase()
+              : isLocationDisabled
+              ? 'GPS LOCATION TURNED OFF'
+              : status === 'ACQUIRING'
+              ? 'ACQUIRING SATELLITE FIX...'
+              : 'GPS SIGNAL SEARCHING...'}
+          </Text>
         </View>
-      ) : null}
+        <Text style={styles.placeSub} numberOfLines={1}>
+          {addressText ||
+            (isLocationDisabled
+              ? 'Tap Turn On to enable GPS location tagging'
+              : status === 'ACQUIRING'
+              ? 'Connecting to GPS satellites'
+              : 'Keep device still or move closer to open sky')}
+        </Text>
+      </View>
     </View>
   );
 };
