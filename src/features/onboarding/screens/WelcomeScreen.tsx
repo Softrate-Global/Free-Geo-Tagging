@@ -20,14 +20,17 @@ interface WelcomeScreenProps {
 
 export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ navigation }) => {
   const [isStarting, setIsStarting] = useState(false);
+  const [permissionStep, setPermissionStep] = useState<string | null>(null);
 
   const handleGetStarted = async () => {
     try {
       setIsStarting(true);
-      // Request Camera and Location permissions smoothly on onboarding
-      await PermissionService.requestCamera();
-      await PermissionService.requestLocation();
-      await PermissionService.requestMediaLibrary();
+      // Sequentially request permissions one by one: Camera -> Location -> Storage
+      await PermissionService.requestPermissionsSequentially((step) => {
+        if (step === 'camera') setPermissionStep('Camera Permission...');
+        if (step === 'location') setPermissionStep('Location Permission...');
+        if (step === 'storage') setPermissionStep('Storage Permission...');
+      });
 
       // Persist onboarding state to local storage
       await AsyncStorage.setItem(APP_CONSTANTS.ONBOARDING_COMPLETED_KEY, 'true');
@@ -43,6 +46,7 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ navigation }) => {
       navigation.replace('Camera');
     } finally {
       setIsStarting(false);
+      setPermissionStep(null);
     }
   };
 
@@ -230,7 +234,12 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ navigation }) => {
           disabled={isStarting}
         >
           {isStarting ? (
-            <ActivityIndicator size="small" color="#FFFFFF" />
+            <View style={styles.startingRow}>
+              <ActivityIndicator size="small" color="#FFFFFF" style={{ marginRight: 8 }} />
+              <Text style={styles.getStartedText}>
+                {permissionStep || 'Setting Up...'}
+              </Text>
+            </View>
           ) : (
             <Text style={styles.getStartedText}>Let’s Get Started</Text>
           )}
@@ -691,5 +700,10 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '700',
     letterSpacing: 0.4,
+  },
+  startingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });

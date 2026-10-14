@@ -10,6 +10,7 @@ interface LocationStatusProps {
   location: LocationData | null;
   onRefresh?: () => void;
   onEditLocation?: () => void;
+  onTurnOnLocation?: () => void;
 }
 
 export const LocationStatus: React.FC<LocationStatusProps> = ({
@@ -17,9 +18,11 @@ export const LocationStatus: React.FC<LocationStatusProps> = ({
   location,
   onRefresh,
   onEditLocation,
+  onTurnOnLocation,
 }) => {
   const isAcquired = status === 'ACQUIRED';
   const isWarning = status === 'INSUFFICIENT_ACCURACY';
+  const isLocationDisabled = status === 'SERVICES_DISABLED' || status === 'PERMISSION_DENIED';
 
   const addressText = location?.formattedAddress || location?.subAddress || '';
 
@@ -44,7 +47,15 @@ export const LocationStatus: React.FC<LocationStatusProps> = ({
         </View>
 
         <View style={styles.headerActions}>
-          {onRefresh && (
+          {isLocationDisabled && onTurnOnLocation ? (
+            <TouchableOpacity
+              activeOpacity={0.7}
+              style={[styles.actionBtn, styles.actionBtnWarning]}
+              onPress={onTurnOnLocation}
+            >
+              <Text style={[styles.actionBtnText, styles.actionBtnWarningText]}>TURN ON</Text>
+            </TouchableOpacity>
+          ) : onRefresh ? (
             <TouchableOpacity
               activeOpacity={0.7}
               style={styles.actionBtn}
@@ -52,7 +63,7 @@ export const LocationStatus: React.FC<LocationStatusProps> = ({
             >
               <Text style={styles.actionBtnText}>RETRY GPS</Text>
             </TouchableOpacity>
-          )}
+          ) : null}
         </View>
       </View>
 
@@ -126,10 +137,18 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255, 255, 255, 0.3)',
     backgroundColor: 'rgba(255, 255, 255, 0.1)',
   },
+  actionBtnWarning: {
+    borderColor: '#FBBF24',
+    backgroundColor: 'rgba(251, 191, 36, 0.2)',
+  },
   actionBtnText: {
     ...typography.micro,
     color: '#FFFFFF',
     letterSpacing: 0.5,
+  },
+  actionBtnWarningText: {
+    color: '#FBBF24',
+    fontWeight: '700',
   },
   placeRow: {
     marginTop: spacing.xs,

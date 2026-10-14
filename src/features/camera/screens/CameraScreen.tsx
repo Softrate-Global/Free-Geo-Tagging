@@ -7,14 +7,19 @@ import {
   Image,
   Alert,
   AppState,
+  PanResponder,
+  TouchableOpacity,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { CameraView, CameraType, FlashMode, useCameraPermissions } from 'expo-camera';
+import { Ionicons } from '@expo/vector-icons';
 import ViewShot from 'react-native-view-shot';
 
+import * as Location from 'expo-location';
 import { useLocation } from '../../location/hooks/useLocation';
 import { LocationService } from '../../location/services/locationService';
 import { LocationStatus } from '../components/LocationStatus';
+import { LocationRequiredModal } from '../components/LocationRequiredModal';
 import { CameraControls } from '../components/CameraControls';
 import { FlashButton } from '../components/FlashButton';
 import { WatermarkTemplate } from '../../watermark/components/WatermarkTemplate';
@@ -58,6 +63,86 @@ export const CameraScreen: React.FC<CameraScreenProps> = ({ navigation }) => {
   const [flash, setFlash] = useState<FlashMode>('off');
   const [isCameraReady, setIsCameraReady] = useState(false);
 
+  // Zoom Settings & Pinch Gesture
+  const [zoom, setZoom] = useState(0);
+  const zoomRef = useRef(0);
+  const baseZoomRef = useRef(0);
+  const initialDistanceRef = useRef<number | null>(null);
+  const [showZoomIndicator, setShowZoomIndicator] = useState(false);
+  const zoomHideTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const triggerZoomFeedback = () => {
+    setShowZoomIndicator(true);
+    if (zoomHideTimeoutRef.current) {
+      clearTimeout(zoomHideTimeoutRef.current);
+    }
+    zoomHideTimeoutRef.current = setTimeout(() => {
+      setShowZoomIndicator(false);
+    }, 1500);
+  };
+
+  const applyZoom = (targetZoom: number) => {
+    const clamped = Math.min(1, Math.max(0, targetZoom));
+    zoomRef.current = clamped;
+    baseZoomRef.current = clamped;
+    setZoom(clamped);
+    triggerZoomFeedback();
+  };
+
+  const panResponder = useRef(
+    PanResponder.create({
+      onStartShouldSetPanResponder: (evt) => evt.nativeEvent.touches.length === 2,
+      onMoveShouldSetPanResponder: (evt) => evt.nativeEvent.touches.length === 2,
+      onPanResponderGrant: (evt) => {
+        if (evt.nativeEvent.touches.length === 2) {
+          const t1 = evt.nativeEvent.touches[0];
+          const t2 = evt.nativeEvent.touches[1];
+          const dist = Math.hypot(t1.pageX - t2.pageX, t1.pageY - t2.pageY);
+          initialDistanceRef.current = dist;
+          baseZoomRef.current = zoomRef.current;
+          triggerZoomFeedback();
+        }
+      },
+      onPanResponderMove: (evt) => {
+        if (evt.nativeEvent.touches.length === 2) {
+          const t1 = evt.nativeEvent.touches[0];
+          const t2 = evt.nativeEvent.touches[1];
+          const dist = Math.hypot(t1.pageX - t2.pageX, t1.pageY - t2.pageY);
+          if (initialDistanceRef.current === null) {
+            initialDistanceRef.current = dist;
+            baseZoomRef.current = zoomRef.current;
+          } else {
+            const delta = dist - initialDistanceRef.current;
+            // 220px delta across screen moves zoom from 0 to 1
+            const newZoom = Math.min(1, Math.max(0, baseZoomRef.current + delta / 220));
+            zoomRef.current = newZoom;
+            setZoom(newZoom);
+            triggerZoomFeedback();
+          }
+        } else {
+          initialDistanceRef.current = null;
+          baseZoomRef.current = zoomRef.current;
+        }
+      },
+      onPanResponderRelease: () => {
+        initialDistanceRef.current = null;
+        baseZoomRef.current = zoomRef.current;
+      },
+      onPanResponderTerminate: () => {
+        initialDistanceRef.current = null;
+        baseZoomRef.current = zoomRef.current;
+      },
+    })
+  ).current;
+
+  useEffect(() => {
+    return () => {
+      if (zoomHideTimeoutRef.current) {
+        clearTimeout(zoomHideTimeoutRef.current);
+      }
+    };
+  }, []);
+
   // Permissions
   const [cameraPermission, requestCameraPermission] = useCameraPermissions();
   const [hasMediaPermission, setHasMediaPermission] = useState<boolean | null>(null);
@@ -82,6 +167,9 @@ export const CameraScreen: React.FC<CameraScreenProps> = ({ navigation }) => {
     subAddress: string;
     formattedAddress: string;
   } | null>(null);
+
+  // Location Required Popup Modal State
+  const [isLocationRequiredModalVisible, setIsLocationRequiredModalVisible] = useState(false);
 
   const effectiveLocation: LocationData | null = currentLocation
     ? {
@@ -167,13 +255,12 @@ export const CameraScreen: React.FC<CameraScreenProps> = ({ navigation }) => {
   const handleRequestAllPermissions = async () => {
     try {
       setIsRequestingPerms(true);
-      const camRes = await requestCameraPermission();
-      const locRes = await PermissionService.requestLocation();
-      const mediaOk = await PermissionService.requestMediaLibrary();
-      setHasMediaPermission(mediaOk);
+      await PermissionService.requestPermissionsSequentially();
+      const all = await PermissionService.checkAllPermissions();
+      setHasMediaPermission(all.mediaGranted);
       await refreshLocation();
 
-      if (!camRes?.granted || !locRes) {
+      if (!all.cameraGranted || !all.locationGranted) {
         Alert.alert(
           'Permissions Required',
           'Camera and Location permissions are required for the live viewfinder and offline GPS watermarking. Please enable them in app settings.',
@@ -201,6 +288,20 @@ export const CameraScreen: React.FC<CameraScreenProps> = ({ navigation }) => {
   // Complete Photo Capture & Watermark Compositing Pipeline
   const handleCapture = async () => {
     if (isProcessing || !cameraRef.current) return;
+
+    // Check if location is turned on before taking photograph
+    const isServicesEnabled = await PermissionService.isLocationServicesEnabled();
+    const locPerm = await Location.getForegroundPermissionsAsync();
+
+    if (
+      !isServicesEnabled ||
+      !locPerm.granted ||
+      gpsStatus === 'SERVICES_DISABLED' ||
+      gpsStatus === 'PERMISSION_DENIED'
+    ) {
+      setIsLocationRequiredModalVisible(true);
+      return;
+    }
 
     try {
       setIsProcessing(true);
@@ -267,6 +368,12 @@ export const CameraScreen: React.FC<CameraScreenProps> = ({ navigation }) => {
     setPendingPhoto(null);
   };
 
+  const handleGoToLocationSettings = async () => {
+    setIsLocationRequiredModalVisible(false);
+    await PermissionService.openLocationSettings();
+    refreshLocation();
+  };
+
   const handleSavePendingPhoto = async (finalWatermarkedUri: string) => {
     if (!pendingPhoto || isSavingPending) return;
 
@@ -331,10 +438,11 @@ export const CameraScreen: React.FC<CameraScreenProps> = ({ navigation }) => {
         style={StyleSheet.absoluteFill}
         facing={facing}
         flash={flash}
+        zoom={zoom}
         onCameraReady={() => setIsCameraReady(true)}
       />
 
-      <SafeAreaView style={styles.overlayContainer} edges={['top', 'bottom']}>
+      <SafeAreaView style={styles.overlayContainer} edges={['top']}>
         {/* Top Header Bar (Clean, Minimal Branding) */}
         <View style={styles.topBar}>
           <Text style={styles.appBranding}>FREE GEO TAGGING</Text>
@@ -350,7 +458,63 @@ export const CameraScreen: React.FC<CameraScreenProps> = ({ navigation }) => {
           </View>
         )}
 
-        <View style={styles.spacer} />
+        {/* Viewfinder Pinch to Zoom Gesture Zone */}
+        <View
+          style={styles.viewfinderPinchArea}
+          collapsable={false}
+          {...panResponder.panHandlers}
+        >
+          {/* Floating Zoom Indicator while pinching */}
+          {showZoomIndicator && (
+            <View style={styles.zoomBadgeContainer} pointerEvents="none">
+              <View style={styles.zoomBadge}>
+                <Ionicons name="scan-outline" size={13} color="#FFD700" style={{ marginRight: 4 }} />
+                <Text style={styles.zoomBadgeText}>
+                  {(1 + zoom * 4).toFixed(1)}x
+                </Text>
+              </View>
+            </View>
+          )}
+
+          {/* Quick Zoom Switcher Pills (1x, 2x) */}
+          <View style={styles.quickZoomContainer}>
+            <TouchableOpacity
+              activeOpacity={0.7}
+              style={[
+                styles.quickZoomBtn,
+                Math.abs(zoom - 0) < 0.05 && styles.quickZoomBtnActive,
+              ]}
+              onPress={() => applyZoom(0)}
+            >
+              <Text
+                style={[
+                  styles.quickZoomText,
+                  Math.abs(zoom - 0) < 0.05 && styles.quickZoomTextActive,
+                ]}
+              >
+                1x
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              activeOpacity={0.7}
+              style={[
+                styles.quickZoomBtn,
+                Math.abs(zoom - 0.25) < 0.05 && styles.quickZoomBtnActive,
+              ]}
+              onPress={() => applyZoom(0.25)}
+            >
+              <Text
+                style={[
+                  styles.quickZoomText,
+                  Math.abs(zoom - 0.25) < 0.05 && styles.quickZoomTextActive,
+                ]}
+              >
+                2x
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
 
         {/* Solid Black Unified Bottom Console (GPS HUD + Controls with Flash & Flip) */}
         <View style={styles.bottomConsole}>
@@ -360,6 +524,7 @@ export const CameraScreen: React.FC<CameraScreenProps> = ({ navigation }) => {
             location={effectiveLocation}
             onRefresh={refreshLocation}
             onEditLocation={() => setIsEditLocationModalVisible(true)}
+            onTurnOnLocation={handleGoToLocationSettings}
           />
 
           {/* Bottom Controls Bar (Gallery, Flashlight Icon, Shutter, Flip Icon) */}
@@ -402,6 +567,12 @@ export const CameraScreen: React.FC<CameraScreenProps> = ({ navigation }) => {
           onClose={() => setIsEditLocationModalVisible(false)}
         />
       )}
+      {/* Location Required Popup Banner */}
+      <LocationRequiredModal
+        visible={isLocationRequiredModalVisible}
+        onGoToSettings={handleGoToLocationSettings}
+        onClose={() => setIsLocationRequiredModalVisible(false)}
+      />
     </View>
   );
 };
@@ -429,8 +600,61 @@ const styles = StyleSheet.create({
     letterSpacing: 2,
     fontSize: 14,
   },
-  spacer: {
+  viewfinderPinchArea: {
     flex: 1,
+    justifyContent: 'flex-end',
+    alignItems: 'center',
+    paddingBottom: spacing.sm,
+  },
+  zoomBadgeContainer: {
+    position: 'absolute',
+    top: '40%',
+    alignSelf: 'center',
+    zIndex: 20,
+  },
+  zoomBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.75)',
+    paddingHorizontal: 14,
+    paddingVertical: 7,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 215, 0, 0.6)',
+  },
+  zoomBadgeText: {
+    color: '#FFD700',
+    fontSize: 15,
+    fontWeight: '800',
+    letterSpacing: 0.5,
+  },
+  quickZoomContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.55)',
+    paddingHorizontal: 6,
+    paddingVertical: 3,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.15)',
+    marginBottom: spacing.xs,
+  },
+  quickZoomBtn: {
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 14,
+  },
+  quickZoomBtnActive: {
+    backgroundColor: '#FFD700',
+  },
+  quickZoomText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  quickZoomTextActive: {
+    color: '#000000',
+    fontWeight: '800',
   },
   bottomConsole: {
     backgroundColor: '#000000',

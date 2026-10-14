@@ -1,7 +1,8 @@
-import React from 'react';
-import { View, StyleSheet, TouchableOpacity, Text, Image } from 'react-native';
+import React, { useRef, useEffect } from 'react';
+import { View, StyleSheet, TouchableOpacity, Text, Image, Animated } from 'react-native';
 import { FlashMode } from 'expo-camera';
 import { Ionicons } from '@expo/vector-icons';
+import { Accelerometer } from 'expo-sensors';
 import { CaptureButton } from './CaptureButton';
 import { typography } from '../../../core/theme/typography';
 import { spacing } from '../../../core/theme/spacing';
@@ -27,67 +28,130 @@ export const CameraControls: React.FC<CameraControlsProps> = ({
   flashMode = 'off',
   onToggleFlash,
 }) => {
+  // Smooth animated rotation for thumbnail and icons based on device orientation
+  const rotationAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    let isMounted = true;
+    let subscription: any = null;
+
+    try {
+      Accelerometer.setUpdateInterval(250);
+      subscription = Accelerometer.addListener(({ x, y }) => {
+        if (!isMounted) return;
+
+        // Ignore when device is flat on a surface
+        if (Math.abs(x) < 0.25 && Math.abs(y) < 0.25) return;
+
+        let target = 0;
+        if (x > 0.45) {
+          target = -90; // Landscape Right
+        } else if (x < -0.45) {
+          target = 90; // Landscape Left
+        } else if (y > 0.55) {
+          target = 180; // Inverted Portrait
+        } else if (y < -0.3) {
+          target = 0; // Standard Portrait
+        } else {
+          return;
+        }
+
+        Animated.spring(rotationAnim, {
+          toValue: target,
+          useNativeDriver: true,
+          bounciness: 6,
+          speed: 12,
+        }).start();
+      });
+    } catch (err) {
+      console.warn('Accelerometer sensor error:', err);
+    }
+
+    return () => {
+      isMounted = false;
+      subscription?.remove?.();
+    };
+  }, [rotationAnim]);
+
+  const rotateInterpolation = rotationAnim.interpolate({
+    inputRange: [-180, 180],
+    outputRange: ['-180deg', '180deg'],
+  });
+
   return (
     <View style={styles.container}>
-      {/* 1. Gallery Button with last captured thumbnail preview */}
-      <TouchableOpacity
-        activeOpacity={0.7}
-        style={styles.iconBtn}
-        onPress={onOpenGallery}
-        disabled={isProcessing}
-      >
-        {thumbnailUri ? (
-          <Image source={{ uri: thumbnailUri }} style={styles.thumbnail} />
-        ) : (
-          <View style={styles.galleryPlaceholder}>
-            <Ionicons name="images-outline" size={22} color="#FFFFFF" />
-          </View>
-        )}
-      </TouchableOpacity>
-
-      {/* 2. Flashlight Toggle Icon Button */}
-      {onToggleFlash && (
+      {/* ──────── Left Section (flex: 1): Gallery Thumbnail + Flash ──────── */}
+      <View style={styles.sideSlotLeft}>
+        {/* 1. Gallery Button with auto-rotating thumbnail preview */}
         <TouchableOpacity
           activeOpacity={0.7}
-          style={[styles.iconBtn, styles.circleBtn, flashMode === 'on' && styles.circleBtnActive]}
-          onPress={onToggleFlash}
+          style={styles.iconBtn}
+          onPress={onOpenGallery}
           disabled={isProcessing}
         >
-          <Ionicons
-            name={
-              flashMode === 'on'
-                ? 'flash'
-                : flashMode === 'auto'
-                ? 'flash'
-                : 'flash-off'
-            }
-            size={22}
-            color={flashMode === 'on' ? '#FBBF24' : '#FFFFFF'}
-          />
-          {flashMode === 'auto' && (
-            <View style={styles.autoBadge}>
-              <Text style={styles.autoBadgeText}>A</Text>
-            </View>
-          )}
+          <Animated.View style={{ transform: [{ rotate: rotateInterpolation }] }}>
+            {thumbnailUri ? (
+              <Image source={{ uri: thumbnailUri }} style={styles.thumbnail} />
+            ) : (
+              <View style={styles.galleryPlaceholder}>
+                <Ionicons name="images-outline" size={22} color="#FFFFFF" />
+              </View>
+            )}
+          </Animated.View>
         </TouchableOpacity>
-      )}
 
-      {/* 3. Main Shutter Button */}
-      <CaptureButton
-        onPress={onCapture}
-        disabled={!canCapture}
-        isProcessing={isProcessing}
-      />
+        {/* 2. Flashlight Toggle Icon Button */}
+        {onToggleFlash && (
+          <TouchableOpacity
+            activeOpacity={0.7}
+            style={[styles.iconBtn, styles.circleBtn, flashMode === 'on' && styles.circleBtnActive]}
+            onPress={onToggleFlash}
+            disabled={isProcessing}
+          >
+            <Animated.View style={{ transform: [{ rotate: rotateInterpolation }] }}>
+              <Ionicons
+                name={
+                  flashMode === 'on'
+                    ? 'flash'
+                    : flashMode === 'auto'
+                    ? 'flash'
+                    : 'flash-off'
+                }
+                size={22}
+                color={flashMode === 'on' ? '#FBBF24' : '#FFFFFF'}
+              />
+            </Animated.View>
+            {flashMode === 'auto' && (
+              <View style={styles.autoBadge}>
+                <Text style={styles.autoBadgeText}>A</Text>
+              </View>
+            )}
+          </TouchableOpacity>
+        )}
+      </View>
 
-      {/* 4. Switch Camera Facing Flip Icon Button */}
-      <TouchableOpacity
-        activeOpacity={0.7}
-        style={[styles.iconBtn, styles.circleBtn]}
-        onPress={onSwitchCamera}
-        disabled={isProcessing}
-      >
-        <Ionicons name="camera-reverse-outline" size={24} color="#FFFFFF" />
-      </TouchableOpacity>
+      {/* ──────── Center Section: Shutter Button (Dead Center on Screen) ──────── */}
+      <View style={styles.centerSlot}>
+        <CaptureButton
+          onPress={onCapture}
+          disabled={!canCapture}
+          isProcessing={isProcessing}
+        />
+      </View>
+
+      {/* ──────── Right Section (flex: 1): Camera Flip Button ──────── */}
+      <View style={styles.sideSlotRight}>
+        <TouchableOpacity
+          activeOpacity={0.7}
+          style={[styles.iconBtn, styles.circleBtn]}
+          onPress={onSwitchCamera}
+          disabled={isProcessing}
+        >
+          <Animated.View style={{ transform: [{ rotate: rotateInterpolation }] }}>
+            <Ionicons name="camera-reverse-outline" size={24} color="#FFFFFF" />
+          </Animated.View>
+        </TouchableOpacity>
+      </View>
     </View>
   );
 };
@@ -96,10 +160,30 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-around',
-    paddingVertical: spacing.md,
+    justifyContent: 'space-between',
+    paddingTop: 12,
+    paddingBottom: 28, // Blank black space padding clearing the Android navigation gesture bar
     paddingHorizontal: spacing.lg,
     backgroundColor: '#000000',
+    width: '100%',
+  },
+  sideSlotLeft: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-start',
+    gap: 16,
+  },
+  centerSlot: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 8,
+  },
+  sideSlotRight: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
   },
   iconBtn: {
     alignItems: 'center',
@@ -112,6 +196,8 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
     borderColor: 'rgba(255, 255, 255, 0.3)',
     backgroundColor: '#1C1C1E',
+    alignItems: 'center',
+    justifyContent: 'center',
     position: 'relative',
   },
   circleBtnActive: {

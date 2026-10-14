@@ -35,3 +35,17 @@ export function formatCaptureTime(timestamp: number): string {
 export function formatFullDateTime(timestamp: number): string {
   return `${formatCaptureDate(timestamp)} • ${formatCaptureTime(timestamp)}`;
 }
+
+/**
+ * Formats timestamp to retro digital camera timestamp style: "HH:mm MM.DD.YY" (e.g. "10:18 10.14.26")
+ */
+export function formatDigitalStamp(timestamp: number): string {
+  const d = new Date(timestamp);
+  const hours = String(d.getHours()).padStart(2, '0');
+  const minutes = String(d.getMinutes()).padStart(2, '0');
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  const year = String(d.getFullYear()).slice(-2);
+  return `${hours}:${minutes} ${month}.${day}.${year}`;
+}
+

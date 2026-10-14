@@ -59,11 +59,36 @@ export class PermissionService {
    */
   static async requestMediaLibrary(): Promise<boolean> {
     try {
-      const res = await MediaLibrary.requestPermissionsAsync(false, ['photo']);
+      const res = await MediaLibrary.requestPermissionsAsync();
       return res.granted;
     } catch {
       return false;
     }
+  }
+
+  /**
+   * Sequentially requests Camera, Location, and Storage permissions one by one,
+   * allowing the OS window focus to settle between system dialogs.
+   */
+  static async requestPermissionsSequentially(
+    onStepChange?: (step: 'camera' | 'location' | 'storage') => void
+  ): Promise<AppPermissionStatus> {
+    // 1. Camera permission
+    onStepChange?.('camera');
+    await this.requestCamera();
+    await new Promise((resolve) => setTimeout(resolve, 450));
+
+    // 2. Foreground Location permission
+    onStepChange?.('location');
+    await this.requestLocation();
+    await new Promise((resolve) => setTimeout(resolve, 450));
+
+    // 3. Storage / Media Library permission for saving photos
+    onStepChange?.('storage');
+    await this.requestMediaLibrary();
+    await new Promise((resolve) => setTimeout(resolve, 450));
+
+    return await this.checkAllPermissions();
   }
 
   /**
@@ -82,5 +107,30 @@ export class PermissionService {
    */
   static openSettings(): void {
     Linking.openSettings().catch(() => {});
+  }
+
+  /**
+   * Open Device Location Settings (Android GPS toggle) or App Settings (iOS/Permissions)
+   */
+  static async openLocationSettings(): Promise<void> {
+    if (Platform.OS === 'android') {
+      try {
+        // Try prompting Google Play Services native system prompt first
+        await Location.enableNetworkProviderAsync();
+        return;
+      } catch {
+        // If rejected, cancelled, or unavailable, proceed to open system location settings
+      }
+
+      try {
+        await Linking.sendIntent('android.settings.LOCATION_SOURCE_SETTINGS');
+        return;
+      } catch {
+        // Fallback to app settings
+        Linking.openSettings().catch(() => {});
+      }
+    } else {
+      Linking.openSettings().catch(() => {});
+    }
   }
 }

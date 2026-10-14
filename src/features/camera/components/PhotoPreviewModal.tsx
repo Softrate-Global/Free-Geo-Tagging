@@ -11,6 +11,7 @@ import {
   PanResponder,
   useWindowDimensions,
   Alert,
+  Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import ViewShot from 'react-native-view-shot';
@@ -21,6 +22,7 @@ import { WatermarkService } from '../../watermark/services/watermarkService';
 import { ShareService } from '../../gallery/services/shareService';
 import { typography } from '../../../core/theme/typography';
 import { spacing } from '../../../core/theme/spacing';
+import { formatDigitalStamp } from '../../../core/utils/dateTimeFormatter';
 
 interface PhotoPreviewModalProps {
   visible: boolean;
@@ -59,8 +61,8 @@ export const PhotoPreviewModal: React.FC<PhotoPreviewModalProps> = ({
   }
 
   // Vertical position bounds for the watermark
-  const minY = 16; // Top bound
-  const maxY = Math.max(minY, canvasHeight - 100); // Bottom bound
+  const minY = 44; // Top bound (leaves clean clearance for the top-right date/time badge)
+  const maxY = Math.max(minY, canvasHeight - 110); // Bottom bound
 
   const currentY = useRef(maxY);
   const translateY = useRef(new Animated.Value(maxY)).current;
@@ -169,6 +171,23 @@ export const PhotoPreviewModal: React.FC<PhotoPreviewModalProps> = ({
     }
   };
 
+  const handleConfirmDelete = () => {
+    if (isSaving || isSharing) return;
+
+    Alert.alert(
+      'DELETE PHOTOGRAPH',
+      'Are you sure you want to delete this photo without saving?',
+      [
+        { text: 'CANCEL', style: 'cancel' },
+        {
+          text: 'DELETE',
+          style: 'destructive',
+          onPress: onDelete,
+        },
+      ]
+    );
+  };
+
   if (!visible || !photoUri) return null;
 
   return (
@@ -177,7 +196,7 @@ export const PhotoPreviewModal: React.FC<PhotoPreviewModalProps> = ({
       transparent={false}
       animationType="fade"
       statusBarTranslucent
-      onRequestClose={onDelete}
+      onRequestClose={handleConfirmDelete}
     >
       <View style={styles.container}>
         {/* ──────── TOP GALLERY HEADER ──────── */}
@@ -187,7 +206,7 @@ export const PhotoPreviewModal: React.FC<PhotoPreviewModalProps> = ({
             <TouchableOpacity
               activeOpacity={0.7}
               style={styles.headerIconBtn}
-              onPress={onDelete}
+              onPress={handleConfirmDelete}
               disabled={isSaving}
             >
               <Ionicons name="arrow-back" size={22} color="#FFFFFF" />
@@ -268,6 +287,15 @@ export const PhotoPreviewModal: React.FC<PhotoPreviewModalProps> = ({
               resizeMode="cover"
             />
 
+            {/* Retro Digital Camera Timestamp Stamp (e.g. "10:18 10.14.26") */}
+            {watermarkData?.captureTimestamp ? (
+              <View style={styles.topRightDigitalStamp}>
+                <Text style={styles.digitalStampText}>
+                  {formatDigitalStamp(watermarkData.captureTimestamp)}
+                </Text>
+              </View>
+            ) : null}
+
             {/* Swipeable / Draggable Location Watermark */}
             {watermarkData && (
               <Animated.View
@@ -292,7 +320,7 @@ export const PhotoPreviewModal: React.FC<PhotoPreviewModalProps> = ({
             <TouchableOpacity
               activeOpacity={0.7}
               style={styles.deleteCircleBtn}
-              onPress={onDelete}
+              onPress={handleConfirmDelete}
               disabled={isSaving || isSharing}
             >
               <Ionicons name="trash-outline" size={22} color="#FF453A" />
@@ -486,5 +514,22 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     letterSpacing: 0.8,
     fontSize: 12.5,
+  },
+  /* ──────── Top-Right Retro Digital Camera Stamp ──────── */
+  topRightDigitalStamp: {
+    position: 'absolute',
+    top: 14,
+    right: 14,
+    zIndex: 10,
+  },
+  digitalStampText: {
+    color: '#FFFFFF',
+    fontFamily: Platform.select({ ios: 'Courier', android: 'monospace' }),
+    fontSize: 12,
+    fontWeight: '700',
+    letterSpacing: 1.2,
+    textShadowColor: 'rgba(0, 0, 0, 0.95)',
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 3,
   },
 });
