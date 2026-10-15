@@ -1,9 +1,8 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, Image } from 'react-native';
+import React from 'react';
+import { View, Text, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { WatermarkData } from '../types/watermarkTypes';
 import { formatOrdinalDate, formatShortTime } from '../../../core/utils/dateTimeFormatter';
-import { APP_CONSTANTS } from '../../../core/constants/appConstants';
 
 interface WatermarkTemplateProps {
   data: WatermarkData;
@@ -11,8 +10,6 @@ interface WatermarkTemplateProps {
 }
 
 export const WatermarkTemplate: React.FC<WatermarkTemplateProps> = ({ data, scale = 1 }) => {
-  const [mapError, setMapError] = useState(false);
-
   // Structured City / Area / Region title (e.g. "Chandigarh, Chandigarh, India")
   const primaryTitle =
     data.subAddress ||
@@ -31,36 +28,28 @@ export const WatermarkTemplate: React.FC<WatermarkTemplateProps> = ({ data, scal
   const formattedDate = formatOrdinalDate(data.captureTimestamp);
   const formattedTime = formatShortTime(data.captureTimestamp);
 
-  // Static Map snapshot URL
-  const staticMapUri =
-    data.latitude != null && data.longitude != null
-      ? `https://maps.geoapify.com/v1/staticmap?style=osm-bright-smooth&width=220&height=220&center=lonlat:${data.longitude},${data.latitude}&zoom=16&marker=lonlat:${data.longitude},${data.latitude};color:%23ea4335;size:medium&apiKey=${APP_CONSTANTS.GEOAPIFY_API_KEY}`
-      : null;
-
   return (
     <View style={[styles.container, { transform: [{ scale }] }]}>
       <View style={styles.row}>
-        {/* ──────── Left Card: Rounded Map Snapshot with Pin ──────── */}
+        {/* ──────── Left Card: Stylized Map with Location Pin Only (No Text) ──────── */}
         <View style={styles.mapCard}>
-          {/* Fallback Vector Map (visible offline or while loading) */}
-          <View style={styles.fallbackMap}>
+          <View style={styles.cleanMap}>
+            {/* Top-Right Stylized 3D Building Accents */}
+            <View style={styles.buildingBlockBase} />
+            <View style={styles.buildingBlockTop} />
+
+            {/* Bottom-Left Soft Green Park Grass */}
             <View style={styles.roadParkArea} />
+
+            {/* Clean Diagonal Road */}
             <View style={styles.roadDiagonalMain} />
             <View style={styles.roadDiagonalSub} />
+
+            {/* Centered Location Pin Icon Only (No Text) */}
             <View style={styles.pinOverlay}>
-              <Ionicons name="location" size={28} color="#EA4335" style={styles.pinShadow} />
+              <Ionicons name="location" size={32} color="#EA4335" style={styles.pinShadow} />
             </View>
           </View>
-
-          {/* Real Static Map Snapshot */}
-          {!mapError && staticMapUri ? (
-            <Image
-              source={{ uri: staticMapUri }}
-              style={StyleSheet.absoluteFill}
-              resizeMode="cover"
-              onError={() => setMapError(true)}
-            />
-          ) : null}
         </View>
 
         {/* ──────── Right Card: iOS Frosted Glassmorphism Card ──────── */}
@@ -124,7 +113,7 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 4,
   },
-  fallbackMap: {
+  cleanMap: {
     position: 'absolute',
     top: 0,
     left: 0,
@@ -132,6 +121,26 @@ const styles = StyleSheet.create({
     bottom: 0,
     backgroundColor: '#F3F4F6',
     overflow: 'hidden',
+  },
+  buildingBlockBase: {
+    position: 'absolute',
+    top: 6,
+    right: 8,
+    width: 26,
+    height: 18,
+    backgroundColor: '#D1D5DB',
+    borderRadius: 2,
+    transform: [{ rotate: '45deg' }],
+  },
+  buildingBlockTop: {
+    position: 'absolute',
+    top: 4,
+    right: 12,
+    width: 22,
+    height: 14,
+    backgroundColor: '#E5E7EB',
+    borderRadius: 2,
+    transform: [{ rotate: '45deg' }],
   },
   roadParkArea: {
     position: 'absolute',

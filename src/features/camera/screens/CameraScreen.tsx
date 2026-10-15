@@ -286,8 +286,8 @@ export const CameraScreen: React.FC<CameraScreenProps> = ({ navigation }) => {
 
         // Fallback to most recent photo from device album
         const MediaLibrary = await import('expo-media-library/legacy');
-        const perm = await MediaLibrary.getPermissionsAsync();
-        if (perm.granted) {
+        const perm = await MediaLibrary.getPermissionsAsync(false, ['photo']).catch(() => ({ granted: false }));
+        if (perm && perm.granted) {
           const result = await MediaLibrary.getAssetsAsync({
             first: 1,
             sortBy: [MediaLibrary.SortBy.creationTime],
