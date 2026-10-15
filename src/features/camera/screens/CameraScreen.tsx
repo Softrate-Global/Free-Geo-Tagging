@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import {
   View,
   Text,
@@ -9,6 +9,7 @@ import {
   AppState,
   PanResponder,
   TouchableOpacity,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { CameraView, CameraType, FlashMode, useCameraPermissions } from 'expo-camera';
@@ -31,8 +32,9 @@ import { GalleryService } from '../../gallery/services/galleryService';
 import { LocalMetadataService } from '../../../shared/services/localMetadataService';
 import { PermissionService } from '../../permissions/services/permissionService';
 
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { generatePhotoFilename } from '../../../core/utils/filenameGenerator';
-import { PhotoMetadata, GPSStatus, LocationData } from '../../../shared/types/photoTypes';
+import { PhotoMetadata, GPSStatus, LocationData, PhotoAspectRatio } from '../../../shared/types/photoTypes';
 import { WatermarkData } from '../../watermark/types/watermarkTypes';
 import { colors } from '../../../core/theme/colors';
 import { typography } from '../../../core/theme/typography';
@@ -40,6 +42,9 @@ import { spacing } from '../../../core/theme/spacing';
 import { PhotoPreviewModal } from '../components/PhotoPreviewModal';
 import { EditLocationModal } from '../components/EditLocationModal';
 import { CustomLocationService } from '../../location/services/customLocationService';
+
+const STORAGE_KEY_PHOTO_RATIO = '@camera_photo_aspect_ratio_v1';
+const RATIO_ORDER: PhotoAspectRatio[] = ['4:3', '16:9', '1:1', 'FULL'];
 
 interface PendingCapture {
   photoUri: string;
@@ -154,6 +159,7 @@ export const CameraScreen: React.FC<CameraScreenProps> = ({ navigation }) => {
   // Processing & Compositing State
   const [isProcessing, setIsProcessing] = useState(false);
   const [processingStatus, setProcessingStatus] = useState<string>('');
+  const [frozenPhotoUri, setFrozenPhotoUri] = useState<string | null>(null);
   const [lastThumbnailUri, setLastThumbnailUri] = useState<string | null>(null);
 
   // Pending Photo Preview State (Before saving to gallery)
@@ -171,16 +177,60 @@ export const CameraScreen: React.FC<CameraScreenProps> = ({ navigation }) => {
   // Location Required Popup Modal State
   const [isLocationRequiredModalVisible, setIsLocationRequiredModalVisible] = useState(false);
 
-  const effectiveLocation: LocationData | null = currentLocation
-    ? {
-        ...currentLocation,
-        placeName: customOverrideLocation?.placeName ?? currentLocation.placeName,
-        subAddress: customOverrideLocation?.subAddress ?? currentLocation.subAddress,
-        formattedAddress: customOverrideLocation?.formattedAddress ?? currentLocation.formattedAddress,
-      }
-    : null;
+  // Photo Aspect Ratio State ('4:3', '16:9', '1:1', 'FULL')
+  const [photoRatio, setPhotoRatio] = useState<PhotoAspectRatio>('4:3');
+  const [ratioBadge, setRatioBadge] = useState<string | null>(null);
+  const ratioBadgeTimeoutRef = useRef<any>(null);
 
-  const handleSaveCustomLocation = async (data: {
+  // Load saved aspect ratio on launch
+  useEffect(() => {
+    AsyncStorage.getItem(STORAGE_KEY_PHOTO_RATIO)
+      .then((val) => {
+        if (val && RATIO_ORDER.includes(val as PhotoAspectRatio)) {
+          setPhotoRatio(val as PhotoAspectRatio);
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  const handleCycleRatio = useCallback(() => {
+    setPhotoRatio((current) => {
+      const idx = RATIO_ORDER.indexOf(current);
+      const next = RATIO_ORDER[(idx + 1) % RATIO_ORDER.length];
+      AsyncStorage.setItem(STORAGE_KEY_PHOTO_RATIO, next).catch(() => {});
+
+      const label =
+        next === '4:3'
+          ? '4:3 (Standard)'
+          : next === '16:9'
+          ? '16:9 (Cinematic)'
+          : next === '1:1'
+          ? '1:1 (Square)'
+          : 'Full Screen';
+
+      setRatioBadge(label);
+      if (ratioBadgeTimeoutRef.current) {
+        clearTimeout(ratioBadgeTimeoutRef.current);
+      }
+      ratioBadgeTimeoutRef.current = setTimeout(() => {
+        setRatioBadge(null);
+      }, 1600);
+
+      return next;
+    });
+  }, []);
+
+  const effectiveLocation: LocationData | null = useMemo(() => {
+    if (!currentLocation) return null;
+    return {
+      ...currentLocation,
+      placeName: customOverrideLocation?.placeName ?? currentLocation.placeName,
+      subAddress: customOverrideLocation?.subAddress ?? currentLocation.subAddress,
+      formattedAddress: customOverrideLocation?.formattedAddress ?? currentLocation.formattedAddress,
+    };
+  }, [currentLocation, customOverrideLocation]);
+
+  const handleSaveCustomLocation = useCallback(async (data: {
     placeName: string;
     subAddress: string;
     formattedAddress: string;
@@ -193,9 +243,9 @@ export const CameraScreen: React.FC<CameraScreenProps> = ({ navigation }) => {
       );
     }
     setCustomOverrideLocation(data);
-  };
+  }, [currentLocation]);
 
-  const handleResetCustomLocation = async () => {
+  const handleResetCustomLocation = useCallback(async () => {
     if (currentLocation) {
       await CustomLocationService.clearSavedLocation(
         currentLocation.latitude,
@@ -204,7 +254,7 @@ export const CameraScreen: React.FC<CameraScreenProps> = ({ navigation }) => {
     }
     setCustomOverrideLocation(null);
     refreshLocation();
-  };
+  }, [currentLocation, refreshLocation]);
 
   // Off-screen compositing state
   const [compositeImage, setCompositeImage] = useState<{
@@ -298,13 +348,13 @@ export const CameraScreen: React.FC<CameraScreenProps> = ({ navigation }) => {
     }
   };
 
-  const handleToggleFacing = () => {
+  const handleToggleFacing = useCallback(() => {
     setFacing((cur) => (cur === 'back' ? 'front' : 'back'));
-  };
+  }, []);
 
-  const handleToggleFlash = () => {
+  const handleToggleFlash = useCallback(() => {
     setFlash((cur) => (cur === 'off' ? 'on' : cur === 'on' ? 'auto' : 'off'));
-  };
+  }, []);
 
   // Complete Photo Capture & Watermark Compositing Pipeline
   const handleCapture = async () => {
@@ -332,10 +382,21 @@ export const CameraScreen: React.FC<CameraScreenProps> = ({ navigation }) => {
 
       // Step 1: Capture raw photo from camera hardware
       const rawPhoto = await CameraService.capturePhoto(cameraRef.current);
+      // Freeze the shuttered photo on screen immediately
+      setFrozenPhotoUri(rawPhoto.uri);
 
       // Step 2: Normalize image orientation
       setProcessingStatus('Normalizing orientation...');
       const normalized = await WatermarkService.normalizeImage(rawPhoto.uri);
+
+      // Step 2.5: Apply chosen aspect ratio crop (4:3, 16:9, 1:1, or FULL)
+      setProcessingStatus('Framing aspect ratio...');
+      const framedPhoto = await WatermarkService.applyAspectRatio(
+        normalized.uri,
+        rawPhoto.width,
+        rawPhoto.height,
+        photoRatio
+      );
 
       // Step 3: Prepare watermark parameters with Google Maps place name
       setProcessingStatus('Resolving location details...');
@@ -365,10 +426,10 @@ export const CameraScreen: React.FC<CameraScreenProps> = ({ navigation }) => {
 
       // Open Photo Preview Modal for user to swipe/position watermark and save
       setPendingPhoto({
-        photoUri: normalized.uri,
+        photoUri: framedPhoto.uri,
         captureTimestamp,
-        width: rawPhoto.width,
-        height: rawPhoto.height,
+        width: framedPhoto.width,
+        height: framedPhoto.height,
         location: finalLocation,
         gpsStatus,
         watermarkData,
@@ -382,6 +443,7 @@ export const CameraScreen: React.FC<CameraScreenProps> = ({ navigation }) => {
     } finally {
       setIsProcessing(false);
       setProcessingStatus('');
+      setFrozenPhotoUri(null);
     }
   };
 
@@ -458,21 +520,45 @@ export const CameraScreen: React.FC<CameraScreenProps> = ({ navigation }) => {
         facing={facing}
         flash={flash}
         zoom={zoom}
+        ratio={photoRatio === '1:1' ? '1:1' : photoRatio === '16:9' ? '16:9' : '4:3'}
         onCameraReady={() => setIsCameraReady(true)}
       />
 
+      {/* Frozen Shuttered Still Frame during capture processing */}
+      {frozenPhotoUri && (
+        <View style={StyleSheet.absoluteFill} pointerEvents="none">
+          <Image
+            source={{ uri: frozenPhotoUri }}
+            style={StyleSheet.absoluteFill}
+            resizeMode="cover"
+          />
+        </View>
+      )}
+
+      {/* 1:1 Square Viewfinder Framing Guide Scrim */}
+      {photoRatio === '1:1' && (
+        <View style={StyleSheet.absoluteFill} pointerEvents="none">
+          <View style={styles.squareMaskTop} />
+          <View style={styles.squareFrame} />
+          <View style={styles.squareMaskBottom} />
+        </View>
+      )}
+
       <SafeAreaView style={styles.overlayContainer} edges={['top']}>
-        {/* Top Header Bar (Clean, Minimal Branding) */}
+        {/* Top Header Bar (Branding) */}
         <View style={styles.topBar}>
           <Text style={styles.appBranding}>FREE GEO TAGGING</Text>
         </View>
 
-        {/* Center Loading Indicator during capture processing */}
+        {/* Center Loading Indicator during capture processing on top of frozen frame */}
         {isProcessing && (
-          <View style={styles.processingModal}>
-            <View style={styles.processingBox}>
-              <Text style={styles.processingTitle}>PROCESSING PHOTO</Text>
-              <Text style={styles.processingText}>{processingStatus}</Text>
+          <View style={styles.frozenLoaderOverlay} pointerEvents="none">
+            <View style={styles.frozenLoaderBox}>
+              <ActivityIndicator size="large" color="#FFD700" style={{ marginBottom: 12 }} />
+              <Text style={styles.frozenLoaderTitle}>PROCESSING PHOTO</Text>
+              {processingStatus ? (
+                <Text style={styles.frozenLoaderText}>{processingStatus}</Text>
+              ) : null}
             </View>
           </View>
         )}
@@ -483,6 +569,16 @@ export const CameraScreen: React.FC<CameraScreenProps> = ({ navigation }) => {
           collapsable={false}
           {...panResponder.panHandlers}
         >
+          {/* Floating Aspect Ratio Toast Badge */}
+          {ratioBadge && (
+            <View style={styles.ratioBadgeContainer} pointerEvents="none">
+              <View style={styles.ratioBadge}>
+                <Ionicons name="crop" size={14} color="#FFD700" style={{ marginRight: 6 }} />
+                <Text style={styles.ratioBadgeText}>{ratioBadge}</Text>
+              </View>
+            </View>
+          )}
+
           {/* Floating Zoom Indicator while pinching */}
           {showZoomIndicator && (
             <View style={styles.zoomBadgeContainer} pointerEvents="none">
@@ -546,7 +642,7 @@ export const CameraScreen: React.FC<CameraScreenProps> = ({ navigation }) => {
             onTurnOnLocation={handleGoToLocationSettings}
           />
 
-          {/* Bottom Controls Bar (Gallery, Flashlight Icon, Shutter, Flip Icon) */}
+          {/* Bottom Controls Bar (Gallery, Flashlight, Shutter, Flip, Ratio Switcher) */}
           <CameraControls
             onCapture={handleCapture}
             onSwitchCamera={handleToggleFacing}
@@ -556,6 +652,8 @@ export const CameraScreen: React.FC<CameraScreenProps> = ({ navigation }) => {
             thumbnailUri={lastThumbnailUri}
             flashMode={flash}
             onToggleFlash={handleToggleFlash}
+            photoRatio={photoRatio}
+            onToggleRatio={handleCycleRatio}
           />
         </View>
       </SafeAreaView>
@@ -619,6 +717,45 @@ const styles = StyleSheet.create({
     letterSpacing: 2,
     fontSize: 14,
   },
+  ratioBadgeContainer: {
+    position: 'absolute',
+    top: '32%',
+    alignSelf: 'center',
+    zIndex: 25,
+  },
+  ratioBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.85)',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#FFD700',
+  },
+  ratioBadgeText: {
+    color: '#FFFFFF',
+    fontSize: 13,
+    fontWeight: '700',
+    letterSpacing: 0.5,
+  },
+  squareMaskTop: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.45)',
+    width: '100%',
+  },
+  squareFrame: {
+    width: '100%',
+    aspectRatio: 1,
+    borderTopWidth: 1,
+    borderBottomWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.35)',
+  },
+  squareMaskBottom: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.45)',
+    width: '100%',
+  },
   viewfinderPinchArea: {
     flex: 1,
     justifyContent: 'flex-end',
@@ -679,31 +816,42 @@ const styles = StyleSheet.create({
     backgroundColor: '#000000',
     width: '100%',
   },
-  processingModal: {
+  frozenLoaderOverlay: {
     ...StyleSheet.absoluteFill,
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    backgroundColor: 'rgba(0, 0, 0, 0.45)',
     alignItems: 'center',
     justifyContent: 'center',
     zIndex: 99,
   },
-  processingBox: {
-    backgroundColor: '#121212',
+  frozenLoaderBox: {
+    backgroundColor: 'rgba(20, 20, 24, 0.88)',
     borderWidth: 1,
-    borderColor: '#38383A',
-    padding: spacing.xl,
-    borderRadius: 8,
+    borderColor: 'rgba(255, 215, 0, 0.4)',
+    paddingVertical: 20,
+    paddingHorizontal: 28,
+    borderRadius: 20,
     alignItems: 'center',
-    minWidth: 240,
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.5,
+    shadowRadius: 16,
+    elevation: 10,
+    minWidth: 220,
   },
-  processingTitle: {
+  frozenLoaderTitle: {
     ...typography.subtitle,
     color: '#FFFFFF',
+    fontSize: 13,
+    fontWeight: '800',
     letterSpacing: 1.5,
-    marginBottom: spacing.xs,
+    marginBottom: 4,
   },
-  processingText: {
+  frozenLoaderText: {
     ...typography.caption,
-    color: colors.textSecondary,
+    color: '#FFD700',
+    fontSize: 12,
+    fontWeight: '600',
     textAlign: 'center',
   },
   // Offscreen watermarking surface

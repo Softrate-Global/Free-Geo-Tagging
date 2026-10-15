@@ -6,10 +6,10 @@ export const APP_CONSTANTS = {
   // GPS Acquisition parameters
   TARGET_ACCURACY_METERS: 20, // Desired horizontal accuracy in meters
   HIGH_ACCURACY_THRESHOLD: 10,
-  ACCEPTABLE_ACCURACY_THRESHOLD: 30,
-  LOCATION_TIMEOUT_MS: 30000, // 30 seconds max wait
-  LOCATION_UPDATE_INTERVAL_MS: 1500, // Background polling / watch interval
-  LOCATION_DISTANCE_FILTER_METERS: 1,
+  ACCEPTABLE_ACCURACY_THRESHOLD: 35,
+  LOCATION_TIMEOUT_MS: 20000, // 20 seconds max wait
+  LOCATION_UPDATE_INTERVAL_MS: 2000, // Balanced watch interval for smooth battery and CPU
+  LOCATION_DISTANCE_FILTER_METERS: 3, // 3 meters distance filter to reject micro-jitter
 
   // Watermark parameters
   WATERMARK_PADDING_RATIO: 0.02, // 2% from border

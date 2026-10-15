@@ -13,7 +13,7 @@ interface LocationStatusProps {
   onTurnOnLocation?: () => void;
 }
 
-export const LocationStatus: React.FC<LocationStatusProps> = ({
+export const LocationStatus = React.memo<LocationStatusProps>(({
   status,
   location,
   onRefresh,
@@ -91,7 +91,7 @@ export const LocationStatus: React.FC<LocationStatusProps> = ({
       </View>
     </View>
   );
-};
+});
 
 const styles = StyleSheet.create({
   container: {

@@ -59,7 +59,7 @@ export class PermissionService {
    */
   static async requestMediaLibrary(): Promise<boolean> {
     try {
-      const res = await MediaLibrary.requestPermissionsAsync();
+      const res = await MediaLibrary.requestPermissionsAsync(false, ['photo']);
       return res.granted;
     } catch {
       return false;

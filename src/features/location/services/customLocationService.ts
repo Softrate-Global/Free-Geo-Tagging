@@ -13,19 +13,9 @@ export interface SavedLocationEntry {
 }
 
 /**
- * Built-in known facility presets (fallback when user hasn't explicitly set a custom tag yet).
+ * Built-in presets list (empty by default; user-defined custom locations take effect when saved).
  */
-const DEFAULT_PRESET_LOCATIONS: SavedLocationEntry[] = [
-  {
-    id: 'preset_softrate_hq',
-    latitude: 13.028948,
-    longitude: 80.108001,
-    placeName: 'SOFTRATE TECH PARK',
-    subAddress: 'Mangadu, Chennai',
-    formattedAddress: '60A, Velleeswarar Koil Street, Srinivasa Nagar, Mangadu, Chennai - 600122',
-    savedAt: 0,
-  },
-];
+const DEFAULT_PRESET_LOCATIONS: SavedLocationEntry[] = [];
 
 /**
  * Calculates distance in meters between two lat/lon coordinates using the Haversine formula.

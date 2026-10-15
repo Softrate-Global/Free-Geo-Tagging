@@ -1,6 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
 import {
-  Modal,
   View,
   Image,
   StyleSheet,
@@ -12,6 +11,7 @@ import {
   useWindowDimensions,
   Alert,
   Platform,
+  BackHandler,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import ViewShot from 'react-native-view-shot';
@@ -61,8 +61,8 @@ export const PhotoPreviewModal: React.FC<PhotoPreviewModalProps> = ({
   }
 
   // Vertical position bounds for the watermark
-  const minY = 44; // Top bound (leaves clean clearance for the top-right date/time badge)
-  const maxY = Math.max(minY, canvasHeight - 110); // Bottom bound
+  const minY = 16; // Top bound
+  const maxY = Math.max(minY, canvasHeight - 112); // Bottom bound
 
   const currentY = useRef(maxY);
   const translateY = useRef(new Animated.Value(maxY)).current;
@@ -73,8 +73,7 @@ export const PhotoPreviewModal: React.FC<PhotoPreviewModalProps> = ({
   useEffect(() => {
     translateY.setValue(maxY);
     currentY.current = maxY;
-    setActivePosition('bottom');
-  }, [canvasHeight, maxY]);
+  }, [maxY]);
 
   const snapTo = (targetY: number, posName: 'top' | 'bottom' | 'custom') => {
     currentY.current = targetY;
@@ -188,16 +187,19 @@ export const PhotoPreviewModal: React.FC<PhotoPreviewModalProps> = ({
     );
   };
 
+  useEffect(() => {
+    if (!visible) return;
+    const sub = BackHandler.addEventListener('hardwareBackPress', () => {
+      handleConfirmDelete();
+      return true;
+    });
+    return () => sub.remove();
+  }, [visible, isSaving, isSharing]);
+
   if (!visible || !photoUri) return null;
 
   return (
-    <Modal
-      visible={visible}
-      transparent={false}
-      animationType="fade"
-      statusBarTranslucent
-      onRequestClose={handleConfirmDelete}
-    >
+    <View style={styles.fullScreenOverlay}>
       <View style={styles.container}>
         {/* ──────── TOP GALLERY HEADER ──────── */}
         <SafeAreaView style={styles.topBarContainer} edges={['top']}>
@@ -289,14 +291,6 @@ export const PhotoPreviewModal: React.FC<PhotoPreviewModalProps> = ({
               />
             ) : null}
 
-            {/* Retro Digital Camera Timestamp Stamp (e.g. "10:18 10.14.26") */}
-            {watermarkData?.captureTimestamp ? (
-              <View style={styles.topRightDigitalStamp}>
-                <Text style={styles.digitalStampText}>
-                  {formatDigitalStamp(watermarkData.captureTimestamp)}
-                </Text>
-              </View>
-            ) : null}
 
             {/* Swipeable / Draggable Location Watermark */}
             {watermarkData && (
@@ -361,11 +355,17 @@ export const PhotoPreviewModal: React.FC<PhotoPreviewModalProps> = ({
           </View>
         </SafeAreaView>
       </View>
-    </Modal>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
+  fullScreenOverlay: {
+    ...(StyleSheet.absoluteFill as any),
+    backgroundColor: '#000000',
+    zIndex: 9999,
+    elevation: 9999,
+  },
   container: {
     flex: 1,
     backgroundColor: '#000000',

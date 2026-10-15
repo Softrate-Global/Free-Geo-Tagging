@@ -6,6 +6,8 @@ export type GPSStatus =
   | 'PERMISSION_DENIED'
   | 'SERVICES_DISABLED';
 
+export type PhotoAspectRatio = '4:3' | '16:9' | '1:1' | 'FULL';
+
 export interface LocationData {
   latitude: number;
   longitude: number;

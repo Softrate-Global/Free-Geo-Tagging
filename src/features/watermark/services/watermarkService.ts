@@ -40,6 +40,85 @@ export class WatermarkService {
   }
 
   /**
+   * Calculates crop rectangle for a given target aspect ratio.
+   * Preserves maximum resolution centered on the image.
+   */
+  static calculateCrop(
+    width: number,
+    height: number,
+    ratio: import('../../../shared/types/photoTypes').PhotoAspectRatio
+  ): { originX: number; originY: number; width: number; height: number } | null {
+    if (ratio === 'FULL') return null;
+
+    const isPortrait = height >= width;
+    let targetRatio: number;
+
+    if (ratio === '1:1') {
+      targetRatio = 1;
+    } else if (ratio === '4:3') {
+      targetRatio = isPortrait ? 3 / 4 : 4 / 3;
+    } else if (ratio === '16:9') {
+      targetRatio = isPortrait ? 9 / 16 : 16 / 9;
+    } else {
+      return null;
+    }
+
+    const currentRatio = width / height;
+    if (Math.abs(currentRatio - targetRatio) < 0.015) {
+      return null; // Already matches desired ratio
+    }
+
+    let cropWidth = width;
+    let cropHeight = height;
+
+    if (currentRatio > targetRatio) {
+      cropWidth = Math.round(height * targetRatio);
+    } else {
+      cropHeight = Math.round(width / targetRatio);
+    }
+
+    const originX = Math.max(0, Math.round((width - cropWidth) / 2));
+    const originY = Math.max(0, Math.round((height - cropHeight) / 2));
+
+    return {
+      originX,
+      originY,
+      width: Math.min(cropWidth, width),
+      height: Math.min(cropHeight, height),
+    };
+  }
+
+  /**
+   * Applies the selected aspect ratio to a captured photograph.
+   */
+  static async applyAspectRatio(
+    uri: string,
+    width: number,
+    height: number,
+    ratio: import('../../../shared/types/photoTypes').PhotoAspectRatio
+  ): Promise<{ uri: string; width: number; height: number }> {
+    const crop = this.calculateCrop(width, height, ratio);
+    if (!crop) {
+      return { uri, width, height };
+    }
+
+    const manipulated = await ImageManipulator.manipulateAsync(
+      uri,
+      [{ crop }],
+      {
+        compress: APP_CONSTANTS.CAPTURE_QUALITY,
+        format: ImageManipulator.SaveFormat.JPEG,
+      }
+    );
+
+    return {
+      uri: manipulated.uri,
+      width: manipulated.width,
+      height: manipulated.height,
+    };
+  }
+
+  /**
    * Permanently captures the view containing the image and the watermark
    * into a persistent rasterized image file on the filesystem.
    */

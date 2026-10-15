@@ -3,6 +3,7 @@ import * as Location from 'expo-location';
 import { LocationData, GPSStatus } from '../../../shared/types/photoTypes';
 import { LocationService } from '../services/locationService';
 import { PermissionService } from '../../permissions/services/permissionService';
+import { APP_CONSTANTS } from '../../../core/constants/appConstants';
 
 export function useLocation() {
   const [currentLocation, setCurrentLocation] = useState<LocationData | null>(null);
@@ -62,6 +63,10 @@ export function useLocation() {
 
   const lastGeocodedCoordsRef = useRef<{ lat: number; lng: number } | null>(null);
   const isGeocodingRef = useRef(false);
+  const smoothedAccuracyRef = useRef<number | null>(null);
+  const currentStatusRef = useRef<GPSStatus>('ACQUIRING');
+  const lastStateUpdateTimeRef = useRef<number>(0);
+  const lastKnownLocRef = useRef<LocationData | null>(null);
 
   useEffect(() => {
     let mounted = true;
@@ -82,46 +87,84 @@ export function useLocation() {
 
         const sub = await LocationService.watchLocation(
           (loc) => {
-            if (mounted) {
-              setCurrentLocation((prev) => ({
-                ...loc,
-                placeName: prev?.placeName,
-                subAddress: prev?.subAddress,
-                formattedAddress: prev?.formattedAddress,
-              }));
-              setGpsStatus(LocationService.evaluateAccuracy(loc.accuracy));
-              setErrorMessage(null);
+            if (!mounted) return;
 
-              // Update address only if moved > 25m and not currently fetching
-              const last = lastGeocodedCoordsRef.current;
-              const hasMovedSignificantly =
-                !last ||
-                Math.abs(loc.latitude - last.lat) > 0.0003 ||
-                Math.abs(loc.longitude - last.lng) > 0.0003;
+            // 1. Smooth accuracy fluctuations using Exponential Moving Average (EMA)
+            const prevAcc = smoothedAccuracyRef.current;
+            const smoothedAcc =
+              prevAcc == null ? loc.accuracy : prevAcc * 0.6 + loc.accuracy * 0.4;
+            smoothedAccuracyRef.current = smoothedAcc;
 
-              if (hasMovedSignificantly && !isGeocodingRef.current) {
-                isGeocodingRef.current = true;
-                lastGeocodedCoordsRef.current = { lat: loc.latitude, lng: loc.longitude };
-                LocationService.reverseGeocode(loc.latitude, loc.longitude)
-                  .then((geo) => {
-                    if (geo && mounted) {
-                      setCurrentLocation((prev) =>
-                        prev
-                          ? {
-                              ...prev,
-                              placeName: geo.placeName,
-                              subAddress: geo.subAddress,
-                              formattedAddress: geo.formattedAddress,
-                            }
-                          : prev
-                      );
-                    }
-                  })
-                  .catch(() => {})
-                  .finally(() => {
-                    isGeocodingRef.current = false;
-                  });
-              }
+            // 2. Evaluate status with hysteresis to prevent rapid flickering
+            const nextStatus = LocationService.evaluateAccuracy(
+              smoothedAcc,
+              APP_CONSTANTS.TARGET_ACCURACY_METERS,
+              currentStatusRef.current
+            );
+            if (nextStatus !== currentStatusRef.current) {
+              currentStatusRef.current = nextStatus;
+              setGpsStatus(nextStatus);
+            }
+
+            setErrorMessage(null);
+
+            // 3. Stationary check: filter out high-frequency micro-jitter if standing still
+            const now = Date.now();
+            const last = lastKnownLocRef.current;
+            const hasMoved =
+              !last ||
+              Math.abs(loc.latitude - last.latitude) > 0.00003 ||
+              Math.abs(loc.longitude - last.longitude) > 0.00003;
+            const timeElapsed = now - lastStateUpdateTimeRef.current;
+
+            // Update UI location if moved > 3m or if 3s elapsed
+            if (hasMoved || timeElapsed > 3000) {
+              lastStateUpdateTimeRef.current = now;
+              const roundedAcc = Math.round(smoothedAcc);
+
+              setCurrentLocation((prev) => {
+                const updated: LocationData = {
+                  ...loc,
+                  accuracy: roundedAcc,
+                  placeName: prev?.placeName,
+                  subAddress: prev?.subAddress,
+                  formattedAddress: prev?.formattedAddress,
+                };
+                lastKnownLocRef.current = updated;
+                return updated;
+              });
+            }
+
+            // 4. Trigger reverse geocoding if moved > 25m or on initial startup
+            const lastGeo = lastGeocodedCoordsRef.current;
+            const needsGeocode =
+              !lastGeo ||
+              Math.abs(loc.latitude - lastGeo.lat) > 0.00025 ||
+              Math.abs(loc.longitude - lastGeo.lng) > 0.00025;
+
+            if (needsGeocode && !isGeocodingRef.current) {
+              isGeocodingRef.current = true;
+              lastGeocodedCoordsRef.current = { lat: loc.latitude, lng: loc.longitude };
+
+              LocationService.reverseGeocode(loc.latitude, loc.longitude)
+                .then((geo) => {
+                  if (geo && mounted) {
+                    setCurrentLocation((prev) =>
+                      prev
+                        ? {
+                            ...prev,
+                            placeName: geo.placeName,
+                            subAddress: geo.subAddress,
+                            formattedAddress: geo.formattedAddress,
+                          }
+                        : prev
+                    );
+                  }
+                })
+                .catch(() => {})
+                .finally(() => {
+                  isGeocodingRef.current = false;
+                });
             }
           },
           () => {
@@ -133,6 +176,7 @@ export function useLocation() {
         if (mounted) setGpsStatus('UNAVAILABLE');
       }
     }
+
 
     startWatcher();
 

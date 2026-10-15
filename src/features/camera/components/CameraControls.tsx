@@ -6,6 +6,7 @@ import { Accelerometer } from 'expo-sensors';
 import { CaptureButton } from './CaptureButton';
 import { typography } from '../../../core/theme/typography';
 import { spacing } from '../../../core/theme/spacing';
+import { PhotoAspectRatio } from '../../../shared/types/photoTypes';
 
 interface CameraControlsProps {
   onCapture: () => void;
@@ -16,9 +17,11 @@ interface CameraControlsProps {
   thumbnailUri?: string | null;
   flashMode?: FlashMode;
   onToggleFlash?: () => void;
+  photoRatio?: PhotoAspectRatio;
+  onToggleRatio?: () => void;
 }
 
-export const CameraControls: React.FC<CameraControlsProps> = ({
+export const CameraControls = React.memo<CameraControlsProps>(({
   onCapture,
   onSwitchCamera,
   onOpenGallery,
@@ -27,16 +30,19 @@ export const CameraControls: React.FC<CameraControlsProps> = ({
   thumbnailUri,
   flashMode = 'off',
   onToggleFlash,
+  photoRatio = '4:3',
+  onToggleRatio,
 }) => {
   // Smooth animated rotation for thumbnail and icons based on device orientation
   const rotationAnim = useRef(new Animated.Value(0)).current;
+  const currentTargetRef = useRef(0);
 
   useEffect(() => {
     let isMounted = true;
     let subscription: any = null;
 
     try {
-      Accelerometer.setUpdateInterval(250);
+      Accelerometer.setUpdateInterval(400);
       subscription = Accelerometer.addListener(({ x, y }) => {
         if (!isMounted) return;
 
@@ -51,12 +57,16 @@ export const CameraControls: React.FC<CameraControlsProps> = ({
           target = 0;
         }
 
-        Animated.spring(rotationAnim, {
-          toValue: target,
-          useNativeDriver: true,
-          bounciness: 6,
-          speed: 12,
-        }).start();
+        // Only start spring animation when orientation state actually changes
+        if (target !== currentTargetRef.current) {
+          currentTargetRef.current = target;
+          Animated.spring(rotationAnim, {
+            toValue: target,
+            useNativeDriver: true,
+            bounciness: 4,
+            speed: 14,
+          }).start();
+        }
       });
     } catch (err) {
       console.warn('Accelerometer sensor error:', err);
@@ -67,6 +77,7 @@ export const CameraControls: React.FC<CameraControlsProps> = ({
       subscription?.remove?.();
     };
   }, [rotationAnim]);
+
 
   const rotateInterpolation = rotationAnim.interpolate({
     inputRange: [-180, 180],
@@ -134,8 +145,9 @@ export const CameraControls: React.FC<CameraControlsProps> = ({
         />
       </View>
 
-      {/* ──────── Right Section (flex: 1): Camera Flip Button + Spacer for Perfect Symmetry ──────── */}
+      {/* ──────── Right Section (flex: 1): Camera Flip Button + Aspect Ratio Button ──────── */}
       <View style={styles.sideSlotRight}>
+        {/* 1. Camera Flip Button */}
         <TouchableOpacity
           activeOpacity={0.7}
           style={[styles.iconBtn, styles.circleBtn]}
@@ -147,12 +159,23 @@ export const CameraControls: React.FC<CameraControlsProps> = ({
           </Animated.View>
         </TouchableOpacity>
 
-        {/* Empty matching spacer to keep Flip equidistant from Shutter as Flash */}
-        <View style={styles.emptySpacer} />
+        {/* 2. Photo Aspect Ratio Button (near Camera Flip) */}
+        {onToggleRatio && (
+          <TouchableOpacity
+            activeOpacity={0.7}
+            style={[styles.iconBtn, styles.circleBtn, styles.ratioBtn]}
+            onPress={onToggleRatio}
+            disabled={isProcessing}
+          >
+            <Animated.View style={{ transform: [{ rotate: rotateInterpolation }] }}>
+              <Text style={styles.ratioButtonText}>{photoRatio}</Text>
+            </Animated.View>
+          </TouchableOpacity>
+        )}
       </View>
     </View>
   );
-};
+});
 
 const styles = StyleSheet.create({
   container: {
@@ -206,6 +229,16 @@ const styles = StyleSheet.create({
   circleBtnActive: {
     borderColor: '#FBBF24',
     backgroundColor: 'rgba(251, 191, 36, 0.15)',
+  },
+  ratioBtn: {
+    borderColor: 'rgba(255, 215, 0, 0.6)',
+    backgroundColor: 'rgba(255, 215, 0, 0.12)',
+  },
+  ratioButtonText: {
+    color: '#FFD700',
+    fontSize: 12,
+    fontWeight: '800',
+    letterSpacing: 0.5,
   },
   autoBadge: {
     position: 'absolute',

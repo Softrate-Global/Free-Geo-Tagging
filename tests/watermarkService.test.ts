@@ -43,4 +43,27 @@ describe('Watermark Data Preparation', () => {
     expect(data.altitude).toBeNull();
     expect(data.captureTimestamp).toBe(captureTimestamp);
   });
+
+  test('calculates correct crop for 1:1 square ratio in portrait', () => {
+    const crop = WatermarkService.calculateCrop(3000, 4000, '1:1');
+    expect(crop).not.toBeNull();
+    expect(crop?.width).toBe(3000);
+    expect(crop?.height).toBe(3000);
+    expect(crop?.originX).toBe(0);
+    expect(crop?.originY).toBe(500);
+  });
+
+  test('calculates correct crop for 16:9 cinematic ratio in portrait', () => {
+    const crop = WatermarkService.calculateCrop(3000, 4000, '16:9');
+    expect(crop).not.toBeNull();
+    expect(crop?.width).toBe(2250);
+    expect(crop?.height).toBe(4000);
+    expect(crop?.originX).toBe(375);
+    expect(crop?.originY).toBe(0);
+  });
+
+  test('returns null for FULL ratio without cropping', () => {
+    const crop = WatermarkService.calculateCrop(3000, 4000, 'FULL');
+    expect(crop).toBeNull();
+  });
 });

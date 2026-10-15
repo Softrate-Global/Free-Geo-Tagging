@@ -9,13 +9,22 @@ import { GoogleMapsService } from './googleMapsService';
 export class LocationService {
   /**
    * Evaluates GPS status based on permission, service availability, and horizontal accuracy.
+   * Includes hysteresis support: once ACQUIRED, allows up to 38m before downgrading to avoid flickering.
    */
   static evaluateAccuracy(
     accuracy: number | null,
-    targetAccuracy: number = APP_CONSTANTS.TARGET_ACCURACY_METERS
+    targetAccuracy: number = APP_CONSTANTS.TARGET_ACCURACY_METERS,
+    currentStatus?: GPSStatus
   ): GPSStatus {
     if (accuracy == null) {
       return 'ACQUIRING';
+    }
+    // Hysteresis guard: prevent green/orange fluttering when accuracy drifts near threshold
+    if (currentStatus === 'ACQUIRED') {
+      if (accuracy <= 38) {
+        return 'ACQUIRED';
+      }
+      return 'INSUFFICIENT_ACCURACY';
     }
     if (accuracy <= targetAccuracy) {
       return 'ACQUIRED';
@@ -93,27 +102,62 @@ export class LocationService {
     );
   }
 
+  private static geoCache: {
+    lat: number;
+    lng: number;
+    data: { placeName: string; subAddress: string; formattedAddress: string };
+    timestamp: number;
+  }[] = [];
+
+  private static cacheAndReturn(
+    lat: number,
+    lng: number,
+    data: { placeName: string; subAddress: string; formattedAddress: string }
+  ) {
+    this.geoCache.unshift({
+      lat,
+      lng,
+      data,
+      timestamp: Date.now(),
+    });
+    if (this.geoCache.length > 25) this.geoCache.pop();
+    return data;
+  }
+
   /**
    * Reverse-geocodes coordinates into a readable place name and address.
    * Multi-tier resolution:
-   * 1. User-customized / remembered location memory (< 120m)
-   * 2. Google Places & Geocoding API (if key available)
-   * 3. Geoapify Places & Reverse Geocoding (with strict <= 40m distance guard)
-   * 4. Native OS Geocoder fallback
+   * 1. In-memory proximity cache (< 20m, 10 min TTL)
+   * 2. User-customized / remembered location memory (< 120m)
+   * 3. Native OS Geocoder (instant, offline-capable via Play Services)
+   * 4. Google Places & Geocoding API (if key available)
+   * 5. Geoapify Places & Reverse Geocoding (with strict <= 40m distance guard)
    */
   static async reverseGeocode(
     latitude: number,
     longitude: number
   ): Promise<{ placeName: string; subAddress: string; formattedAddress: string } | null> {
-    // 1. Check user-defined / remembered location memory (e.g. "SOFTRATE TECH PARK")
+    // 0. Proximity Cache lookup
+    const now = Date.now();
+    const cached = this.geoCache.find(
+      (c) =>
+        now - c.timestamp < 600000 &&
+        Math.abs(c.lat - latitude) < 0.0002 &&
+        Math.abs(c.lng - longitude) < 0.0002
+    );
+    if (cached) {
+      return cached.data;
+    }
+
+    // 1. Check user-defined / remembered location memory
     try {
       const saved = await CustomLocationService.getSavedLocation(latitude, longitude);
       if (saved && saved.placeName) {
-        return {
+        return this.cacheAndReturn(latitude, longitude, {
           placeName: saved.placeName,
           subAddress: saved.subAddress,
           formattedAddress: saved.formattedAddress,
-        };
+        });
       }
     } catch {}
 
@@ -177,20 +221,20 @@ export class LocationService {
       console.warn('Native geocoding notice:', err);
     }
 
-    // If native geocoder provided a street-level address, use it!
+    // If native geocoder provided a street-level address, cache and return immediately!
     if (nativeResult && nativeResult.hasStreet) {
-      return {
+      return this.cacheAndReturn(latitude, longitude, {
         placeName: nativeResult.placeName,
         subAddress: nativeResult.subAddress,
         formattedAddress: nativeResult.formattedAddress,
-      };
+      });
     }
 
     // 3. Attempt Google Places & Geocoding (if API key configured)
     try {
       const googleResult = await GoogleMapsService.resolveLocation(latitude, longitude);
       if (googleResult && googleResult.placeName) {
-        return googleResult;
+        return this.cacheAndReturn(latitude, longitude, googleResult);
       }
     } catch {}
 
@@ -198,19 +242,20 @@ export class LocationService {
     try {
       const geoapifyResult = await GeoapifyService.resolveLocation(latitude, longitude);
       if (geoapifyResult && geoapifyResult.placeName) {
-        return geoapifyResult;
+        return this.cacheAndReturn(latitude, longitude, geoapifyResult);
       }
     } catch {}
 
     // Fallback to native result if Geoapify didn't resolve
     if (nativeResult) {
-      return {
+      return this.cacheAndReturn(latitude, longitude, {
         placeName: nativeResult.placeName,
         subAddress: nativeResult.subAddress,
         formattedAddress: nativeResult.formattedAddress,
-      };
+      });
     }
 
     return null;
   }
 }
+
